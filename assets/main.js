@@ -1,3 +1,9 @@
+import {buildRampScene} from './ramp-scene.mjs?v=tabs1';
+import {attachRamp} from './ramp-course.mjs';
+import {createVehicle, toggleFlight, stepVehicle, wheelKinematics, WHEEL_RADIUS, setInfiniteBoosters, adjustFlightAltitude, FLIGHT} from './vehicle.mjs?v=flip1';
+import {buildCity} from './city.mjs?v=forest2';
+import {buildForestRoad} from './forest-road.mjs?v=ramp1';
+import {createAtmosphere} from './atmosphere.mjs?v=forest3';
 var Ki = {
     LEFT: 0,
     MIDDLE: 1,
@@ -27422,30 +27428,6 @@ var uo = class extends an {
 ;
 var Qi = ne
   , q = C
-  , Rx = Math.PI / 180
-  , at = 4.6
-  , cn = .35
-  , Cx = .11
-  , Px = [{
-    type: "line",
-    len: 3
-}, {
-    type: "arc",
-    r: 5,
-    sweep: 90
-}, {
-    type: "line",
-    len: 5.8
-}, {
-    type: "arc",
-    r: 5.3,
-    sweep: 72
-}, {
-    type: "line",
-    len: 9
-}]
-  , Nh = 8
-  , Ix = new ue(16,.45,.32)
   , xt = new Pa({
     antialias: !1,
     powerPreference: "high-performance"
@@ -27455,7 +27437,7 @@ xt.setSize(innerWidth, innerHeight);
 xt.toneMapping = Cr;
 xt.toneMappingExposure = 1;
 xt.shadowMap.enabled = !0;
-xt.shadowMap.type = Rl;
+xt.shadowMap.type = qn;
 document.body.appendChild(xt.domElement);
 var gt = new Ds;
 gt.background = new ue(65794);
@@ -27471,407 +27453,6 @@ var Lx = new Ls(xt)
     toneMapped: !1,
     fog: !1
 });
-function Dx(i, e=.1) {
-    let t = []
-      , n = new Qi(-i[0].len,.02)
-      , s = 0
-      , r = 0
-      , a = (o, c, l, h) => t.push({
-        p: o.clone(),
-        th: c,
-        s: l,
-        seg: h,
-        t: new Qi(Math.cos(c),Math.sin(c)),
-        n: new Qi(-Math.sin(c),Math.cos(c))
-    });
-    return a(n, s, 0, 0),
-    i.forEach( (o, c) => {
-        if (o.type === "line") {
-            let l = Math.ceil(o.len / e)
-              , h = n.clone()
-              , u = new Qi(Math.cos(s),Math.sin(s));
-            for (let f = 1; f <= l; f++) {
-                let d = o.len * f / l;
-                n = h.clone().addScaledVector(u, d),
-                a(n, s, r + d, c)
-            }
-            r += o.len
-        } else {
-            let l = o.sweep * Rx
-              , h = o.r * l
-              , u = Math.ceil(h / e)
-              , f = s
-              , d = n.clone().add(new Qi(-Math.sin(f),Math.cos(f)).multiplyScalar(o.r));
-            for (let m = 1; m <= u; m++) {
-                let b = f + l * m / u;
-                n = d.clone().sub(new Qi(-Math.sin(b),Math.cos(b)).multiplyScalar(o.r)),
-                a(n, b, r + h * m / u, c)
-            }
-            s = f + l,
-            r += h
-        }
-    }
-    ),
-    t
-}
-var dt = Dx(Px)
-  , ai = dt[dt.length - 1]
-  , dy = ai.p.y
-  , Ef = dt.find(i => i.seg === 2).p.x
-  , fy = Math.min(...dt.filter(i => i.seg >= 3).map(i => i.p.x - i.n.x * cn))
-  , ln = (i, e, t=0) => new q(i.p.x + i.n.x * t,i.p.y + i.n.y * t,e)
-  , Ux = xt.capabilities.getMaxAnisotropy();
-function qh({base: i="#b8b8b3", line: e=!1, S: t=1024, blobs: n=900, grain: s=16}={}) {
-    let r = document.createElement("canvas");
-    r.width = r.height = t;
-    let a = r.getContext("2d");
-    a.fillStyle = i,
-    a.fillRect(0, 0, t, t);
-    for (let h = 0; h < n; h++) {
-        let u = Math.random() * t
-          , f = Math.random() * t
-          , d = 8 + Math.random() * 90
-          , m = Math.random() < .55 ? 40 : 255
-          , b = .012 + Math.random() * .04;
-        for (let g of [-t, 0, t])
-            for (let p of [-t, 0, t]) {
-                let x = a.createRadialGradient(u + g, f + p, 0, u + g, f + p, d);
-                x.addColorStop(0, `rgba(${m},${m},${m},${b})`),
-                x.addColorStop(1, `rgba(${m},${m},${m},0)`),
-                a.fillStyle = x,
-                a.fillRect(u + g - d, f + p - d, 2 * d, 2 * d)
-            }
-    }
-    let o = a.getImageData(0, 0, t, t)
-      , c = o.data;
-    for (let h = 0; h < c.length; h += 4) {
-        let u = (Math.random() - .5) * s;
-        c[h] += u,
-        c[h + 1] += u,
-        c[h + 2] += u
-    }
-    if (a.putImageData(o, 0, 0),
-    e) {
-        let h = t * Cx / at;
-        a.fillStyle = "rgba(248,248,244,0.96)",
-        a.fillRect(t / 2 - h / 2, 0, h, t)
-    }
-    let l = new Os(r);
-    return l.colorSpace = St,
-    l.wrapS = l.wrapT = Zn,
-    l.anisotropy = Ux,
-    l
-}
-function Nx(i) {
-    return i.onBeforeCompile = e => {
-        e.fragmentShader = e.fragmentShader.replace("#include <emissivemap_fragment>", `
-      #include <emissivemap_fragment>
-      {
-        float w = (0.5 - abs(vMapUv.x - 0.5)) * ${at.toFixed(3)};
-        totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.05, 0.04) * (exp(-w / 0.28) * 1.3 + exp(-w) * 0.22);
-      }`)
-    }
-    ,
-    i
-}
-function fo(i, e, t, n, s, r, a) {
-    let o = []
-      , c = []
-      , l = []
-      , h = [];
-    for (let f = 0; f < i.length; f++) {
-        let d = i[f]
-          , m = e[f]
-          , b = t[f]
-          , g = a[f] / r;
-        if (o.push(d.x, d.y, d.z, m.x, m.y, m.z),
-        c.push(b.x, b.y, b.z, b.x, b.y, b.z),
-        l.push(n, g, s, g),
-        f < i.length - 1) {
-            let p = 2 * f
-              , x = p + 1
-              , v = p + 2
-              , _ = p + 3;
-            h.push(p, x, v, x, _, v)
-        }
-    }
-    let u = new bt;
-    return u.setAttribute("position", new We(o,3)),
-    u.setAttribute("normal", new We(c,3)),
-    u.setAttribute("uv", new We(l,2)),
-    u.setIndex(h),
-    u
-}
-var Fx = qh({
-    line: !0
-})
-  , Ox = qh({
-    base: "#a9a9a4",
-    blobs: 300
-})
-  , Tf = Nx(new Lt({
-    map: Fx,
-    roughness: .88,
-    metalness: 0
-}))
-  , po = new Lt({
-    map: Ox,
-    roughness: .9,
-    metalness: 0,
-    color: 10132118
-})
-  , Fh = new Bt;
-{
-    let i = dt.map(u => u.s)
-      , e = dt.map(u => ln(u, -at / 2))
-      , t = dt.map(u => ln(u, at / 2))
-      , n = dt.map(u => ln(u, -at / 2, -cn))
-      , s = dt.map(u => ln(u, at / 2, -cn))
-      , r = dt.map(u => new q(u.n.x,u.n.y,0))
-      , a = r.map(u => u.clone().negate())
-      , o = dt.map( () => new q(0,0,-1))
-      , c = dt.map( () => new q(0,0,1))
-      , l = [[fo(e, t, r, 0, 1, at, i), Tf], [fo(s, n, a, 0, 1, at, i), po], [fo(n, e, o, 0, cn / at, at, i), po], [fo(t, s, c, 0, cn / at, at, i), po]];
-    for (let[u,f] of l) {
-        let d = new be(u,f);
-        d.castShadow = !1,
-        d.receiveShadow = !0,
-        Fh.add(d)
-    }
-    let h = new be(new Ct(cn,.02,at),po);
-    h.position.copy(ln(ai, 0, -cn / 2)),
-    h.rotation.z = ai.th - Math.PI / 2,
-    Fh.add(h)
-}
-gt.add(Fh);
-var Oh = Ys(Ix);
-for (let i of [-1, 1]) {
-    let e = [];
-    for (let n = 1, s = 0; s < dt.length; s++) {
-        let r = dt[s];
-        r.s >= n && (e.push(ln(r, i * (at / 2 + .035), .02)),
-        n += .35)
-    }
-    let t = ln(ai, i * (at / 2 + .035), .02);
-    e[e.length - 1].distanceTo(t) > .05 && e.push(t),
-    gt.add(new be(new Er(new Bs(e),e.length * 3,.03,8,!1),Oh))
-}
-var Bh = []
-  , xo = .075
-  , Bx = .035
-  , es = .06
-  , qt = (i, e, t=Bx) => Bh.push({
-    a: i.clone(),
-    b: e.clone(),
-    r: t
-});
-function mo(i, e, t, n, s, r=new q(0,0,1)) {
-    let a = e.clone().sub(i)
-      , o = a.length();
-    a.normalize();
-    let c = new q().crossVectors(a, r);
-    c.lengthSq() < 1e-6 && (c = new q().crossVectors(a, new q(1,0,0))),
-    c.normalize();
-    let l = new q().crossVectors(c, a).normalize()
-      , h = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map( ([d,m]) => c.clone().multiplyScalar(d * t / 2).addScaledVector(l, m * n / 2))
-      , u = Math.max(1, Math.round(o / s))
-      , f = (d, m) => i.clone().addScaledVector(a, o * d / u).add(h[m]);
-    for (let d = 0; d < 4; d++)
-        qt(f(0, d), f(u, d), xo);
-    for (let d = 0; d <= u; d++)
-        for (let m = 0; m < 4; m++)
-            qt(f(d, m), f(d, (m + 1) % 4));
-    for (let d = 0; d < u; d++)
-        for (let m = 0; m < 4; m++)
-            (d + m) % 2 ? qt(f(d, m), f(d + 1, (m + 1) % 4)) : qt(f(d, (m + 1) % 4), f(d + 1, m))
-}
-var Br = 2.4
-  , Ii = .7
-  , dn = at / 2 - Ii / 2
-  , On = dn - Ii / 2
-  , ts = Ef + cn + .25
-  , Zs = ts + Br / 2
-  , si = ts + Br
-  , vn = 1.8
-  , kh = dt.filter(i => i.seg === 4)
-  , zh = kh[0]
-  , vo = -(cn + .05 + vn / 2)
-  , bo = (i, e) => ln(i, e, vo)
-  , ri = bo(zh, 0)
-  , jh = ri.y + vn / 2
-  , yo = jh / Nh;
-for (let i of [-dn, dn])
-    mo(new q(Zs,0,i), new q(Zs,jh,i), Br, Ii, yo),
-    mo(bo(zh, i), bo(ai, i), vn, Ii, 1.6),
-    mo(bo(zh, i), new q(si,ri.y,i), vn, Ii, 1.6),
-    mo(new q(Ef - 1.8,.15,i), new q(ts,yo,i), .4, .4, 1);
-for (let i = 0; i <= Nh; i++) {
-    let e = i * yo;
-    qt(new q(si,e,-On), new q(si,e,On), es),
-    i < Nh && qt(new q(si,e,-On), new q(si,e + yo,On))
-}
-for (let i = 0; i < kh.length; i += 16) {
-    let e = kh[i]
-      , t = vo - vn / 2;
-    qt(ln(e, -On, t), ln(e, On, t), es)
-}
-qt(ln(ai, -On, vo - vn / 2), ln(ai, On, vo - vn / 2), es);
-for (let i = ri.x; i <= si + .01; i += 1.6)
-    qt(new q(i,ri.y + vn / 2,-On), new q(i,ri.y + vn / 2,On), es);
-var kx = new Lt({
-    color: 9080210,
-    metalness: .4,
-    roughness: .5
-});
-for (let i of [-dn, dn]) {
-    let e = new q(si,jh,i)
-      , t = new q(si + 10,0,i * 2.5)
-      , n = t.clone().sub(e)
-      , s = new be(new Si(.015,.015,n.length(),4),kx);
-    s.position.copy(e).add(t).multiplyScalar(.5),
-    s.quaternion.setFromUnitVectors(new q(0,1,0), n.normalize()),
-    gt.add(s)
-}
-var zx = dt.filter( (i, e) => i.s > 3.4 && i.seg <= 3 && e % 12 === 0)
-  , js = null;
-for (let i of zx) {
-    let e = n => ln(i, n, -cn - .05);
-    qt(e(-at / 2 + .15), e(at / 2 - .15), es);
-    let t = i.seg <= 1 && e(0).x < ts - .5;
-    for (let n of [-dn, dn]) {
-        let s = e(n);
-        js && qt(js.back(n), s, xo),
-        !(s.y < .6) && (t ? (qt(s, new q(s.x,0,n), xo),
-        js && js.post && qt(new q(js.back(n).x,0,n), s)) : s.x > ts - 1.5 && s.y < ri.y - vn / 2 - .2 ? qt(s, new q(ts,s.y,n), es) : s.x >= ri.x && s.y < ri.y - vn / 2 - .1 && qt(s, new q(s.x,ri.y - vn / 2,n), es))
-    }
-    js = {
-        back: e,
-        post: t
-    }
-}
-for (let i of [-dn, dn])
-    qt(new q(1,.08,i), new q(ts,.08,i), xo);
-var uf = new Lt({
-    color: 12896461,
-    metalness: .25,
-    roughness: .42
-});
-{
-    let i = new Si(1,1,1,8,1,!1)
-      , e = new Us(i,uf,Bh.length)
-      , t = new Le
-      , n = new wt
-      , s = new q(0,1,0);
-    Bh.forEach( ({a: r, b: a, r: o}, c) => {
-        let l = a.clone().sub(r)
-          , h = l.length();
-        n.setFromUnitVectors(s, l.normalize()),
-        t.compose(r.clone().add(a).multiplyScalar(.5), n, new q(o,h,o)),
-        e.setMatrixAt(c, t)
-    }
-    ),
-    e.castShadow = !1,
-    e.receiveShadow = !0,
-    gt.add(e);
-    for (let r of [-dn, dn])
-        for (let a of [-1, 1])
-            for (let o of [-1, 1]) {
-                let c = new be(new Ct(.5,.06,.5),uf);
-                c.position.set(Zs + a * Br / 2, .03, r + o * Ii / 2),
-                gt.add(c)
-            }
-}
-{
-    let i = qh({
-        base: "#2a2a2b",
-        S: 512,
-        blobs: 250,
-        grain: 30
-    });
-    i.repeat.set(80, 80);
-    let e = new be(new yi(800,800),new Lt({
-        map: i,
-        color: 7829367,
-        roughness: .95
-    }));
-    e.rotation.x = -Math.PI / 2,
-    e.receiveShadow = !0,
-    gt.add(e);
-    let t = 7.3
-      , n = -3 - t
-      , s = new yi(t,at);
-    s.rotateX(-Math.PI / 2),
-    s.translate(n + t / 2, .02, 0);
-    let r = s.attributes.position
-      , a = s.attributes.uv;
-    for (let _ = 0; _ < r.count; _++)
-        a.setXY(_, (r.getZ(_) + at / 2) / at, (r.getX(_) + 3) / at);
-    let o = new be(s,Tf);
-    o.receiveShadow = !0,
-    gt.add(o);
-    let c = new Lt({
-        color: 14606046,
-        roughness: .7
-    });
-    for (let _ of [-7.5, 7.5]) {
-        let P = new be(new yi(230,.15),c);
-        P.rotation.x = -Math.PI / 2,
-        P.position.set(-100, .005, _),
-        gt.add(P)
-    }
-    let l = -3 - 7.3
-      , h = Zs + Br / 2 + 1.2
-      , u = dn + Ii / 2 + .6
-      , f = [[[l, -u], [h, -u]], [[h, -u], [h, u]], [[h, u], [l, u]]];
-    for (let[[_,P],[E,R]] of f) {
-        let L = Math.hypot(E - _, R - P)
-          , w = new be(new Ct(L,.04,.06),Oh);
-        w.position.set((_ + E) / 2, .02, (P + R) / 2),
-        w.rotation.y = -Math.atan2(R - P, E - _),
-        gt.add(w)
-    }
-    let d = -170
-      , m = -14
-      , b = -15
-      , g = new be(new Ct(m - d,.55,.35),new Lt({
-        color: 1381653,
-        roughness: .8
-    }));
-    g.position.set((d + m) / 2, .275, b),
-    gt.add(g);
-    let p = new be(new Ct(m - d,.05,.02),Oh);
-    p.position.set((d + m) / 2, .3, b + .18),
-    gt.add(p);
-    let x = new Ft({
-        color: new ue(3,3,3),
-        toneMapped: !1
-    })
-      , v = new Va(.06,8,6);
-    for (let _ = d + 1; _ < m; _ += 3) {
-        let P = new be(v,x);
-        P.position.set(_, .6, b),
-        gt.add(P)
-    }
-}
-gt.add(new Ya(8425632,328965,.12));
-function kr(i, e, t, n, s=!0) {
-    let r = new Yi(15922431,t,0,n,.65,2);
-    return r.position.copy(i),
-    r.target.position.copy(e),
-    s && (r.castShadow = !0,
-    r.shadow.mapSize.set(2048, 2048),
-    r.shadow.bias = -4e-4,
-    r.shadow.normalBias = .03,
-    r.shadow.camera.near = 5,
-    r.shadow.camera.far = 140),
-    gt.add(r, r.target),
-    r
-}
-kr(new q(-26,1.5,-8), new q(3,9,0), 1200, .45);
-kr(new q(-26,1.5,8), new q(3,9,0), 1200, .45);
-kr(new q(32,5,18), new q(Zs,14,0), 2400, .26);
-kr(new q(24,2,-22), new q(Zs,14,0), 1500, .28, !1);
-kr(new q(-5,11,0), new q(-6.6,0,0), 70, .5);
 var un = {
     wheelRadius: .3,
     wheels: [{
@@ -27888,9 +27469,9 @@ var un = {
         z: -1.3844
     }],
     start: {
-        x: -7,
-        z: 0,
-        heading: Math.PI / 2
+        x: 4,
+        z: -24,
+        heading: 0
     }
 };
 function Hx() {
@@ -28023,6 +27604,7 @@ gt.add(Pe);
 new so().setMeshoptDecoder(cf).load("models/roadster.glb", i => {
     let e = new Bt;
     Pe.add(e);
+    Pe.userData.body=e;
     let t = {
         Paint: new At({
             color: new ue(.86,.855,.845),
@@ -28065,13 +27647,11 @@ new so().setMeshoptDecoder(cf).load("models/roadster.glb", i => {
         e.add(a)
     }
     );
-    for (let n of un.wheels) {
-        let s = Hh(Math.sign(n.x));
-        s.position.set(n.x, un.wheelRadius, n.z),
-        Pe.add(s),
-        s.rotation.order = "YXZ",
-        s.userData.front = n.z > 0,
-        (Pe.userData.wheels ??= []).push(s)
+    for (const [index,n] of un.wheels.entries()) {
+        const pivot=new Bt(), wheel=Hh(Math.sign(n.x));
+        pivot.position.set(n.x,un.wheelRadius,n.z);pivot.add(wheel);Pe.add(pivot);
+        pivot.userData={front:n.z>0,x:n.x,z:n.z,index,spinner:wheel};
+        (Pe.userData.wheels??=[]).push(pivot);
     }
     Vx(e),
     Nf(),
@@ -28100,30 +27680,7 @@ Di.addPass(new Xs({
 }));
 Di.addPass(new qs(new Qi(innerWidth,innerHeight),.22,.12,1.6));
 Di.addPass(new uo);
-var Af = [{
-    pos: [-29.51, 16.31, 50.36],
-    target: [2, 8.5, 0],
-    fov: 34
-}, {
-    pos: [-20, 20, 36],
-    target: [-1, 5, 0],
-    fov: 40
-}, {
-    pos: [-30, 11, 27],
-    target: [3, 8.5, 0],
-    fov: 36
-}, {
-    pos: [2, 9, 52],
-    target: [2, 9, 0],
-    fov: 32
-}, {
-    pos: [-24, 3, 42],
-    target: [2, 8.5, 0],
-    fov: 32
-}]
-  , df = 1.6
-  , So = !1
-  , Yh = 35;
+var df=1.6, So=false, Yh=58;
 function Kh() {
     let i = innerWidth / innerHeight;
     _t.aspect = i;
@@ -28133,20 +27690,6 @@ function Kh() {
     i < 1 && !So ? _t.setViewOffset(innerWidth, innerHeight, -.075 * innerWidth, 0, innerWidth, innerHeight) : _t.clearViewOffset(),
     _t.updateProjectionMatrix()
 }
-function Rf(i) {
-    let e = Af[i];
-    _t.position.set(...e.pos),
-    hn.target.set(...e.target),
-    Yh = e.fov,
-    Kh(),
-    hn.update()
-}
-Rf(0);
-addEventListener("keydown", i => {
-    let e = +i.key - 1;
-    e >= 0 && e < Af.length && Rf(e)
-}
-);
 function wo() {
     Kh(),
     xt.setPixelRatio(Math.min(devicePixelRatio, innerWidth < 900 ? 2 : 1.5)),
@@ -28158,911 +27701,125 @@ addEventListener("resize", wo);
 addEventListener("orientationchange", () => setTimeout(wo, 200));
 visualViewport?.addEventListener("resize", wo);
 wo();
-var Cf = new Bt;
-gt.add(Cf);
-var Li = {
-    on: !1,
-    lens: null,
-    beams: []
+var Li={on:true,beams:[]};
+addEventListener('keydown',event=>{
+ if(event.code!=='KeyL'||event.repeat)return;
+ Li.on=!Li.on;Pe.traverse(child=>{if(child.isSpotLight)child.visible=Li.on;});Nf();
+});
+var on = {}, A = {
+    mode: 'ground', x:4, z:-24, yaw:0, v:0, steer:0,
+    pos:new q(4,0,-24), vel:new q(), angVel:new q(), quat:new wt(),
+    chase:true, flyMode:false, aLong:0, blown:false,
+    firing:{level:new Float32Array(14)}
 };
-function Pf(i) {
-    Li.on = i,
-    Li.lens.color.setRGB(...i ? [16, 16, 17] : [.035, .036, .04]);
-    for (let e of Li.beams)
-        e.visible = i
-}
-addEventListener("keydown", i => {
-    i.code === "KeyL" && Pf(!Li.on)
-}
-);
-( () => {
-    let i = dn + Ii / 2 + .6 + 1.6
-      , e = [];
-    for (let f = -3 - 7.3 + .5; f <= si + .5; f += 2.2)
-        e.push(f);
-    let t = ( () => {
-        let f = document.createElement("canvas");
-        f.width = 4,
-        f.height = 256;
-        let d = f.getContext("2d")
-          , m = d.createLinearGradient(0, 0, 0, 256);
-        return m.addColorStop(0, "rgba(255,255,255,0)"),
-        m.addColorStop(.7, "rgba(255,255,255,0.35)"),
-        m.addColorStop(1, "rgba(255,255,255,1)"),
-        d.fillStyle = m,
-        d.fillRect(0, 0, 4, 256),
-        new Os(f)
-    }
-    )()
-      , n = new Lt({
-        color: 1579035,
-        roughness: .45,
-        metalness: .6
-    })
-      , s = new Ft({
-        color: new ue(16,16,17),
-        toneMapped: !1,
-        fog: !1
-    });
-    Li.lens = s;
-    let r = new Mt({
-        transparent: !0,
-        depthWrite: !1,
-        side: Ot,
-        blending: Xi,
-        uniforms: {
-            uOpacity: {
-                value: .11
-            }
-        },
-        vertexShader: `varying vec3 vN; varying vec3 vP; varying float vT;
-      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vP = mv.xyz;
-        vN = normalize(normalMatrix * normal); vT = uv.y; gl_Position = projectionMatrix * mv; }`,
-        fragmentShader: `uniform float uOpacity; varying vec3 vN; varying vec3 vP; varying float vT;
-      void main(){
-        float facing = abs(dot(normalize(vN), normalize(-vP)));   // 1 through the core, 0 at the silhouette
-        float core = pow(clamp(facing, 0.0, 1.0), 3.0);
-        float along = pow(clamp(1.0 - vT, 0.0, 1.0), 2.2) * smoothstep(0.0, 0.06, vT); // fades out with distance
-        gl_FragColor = vec4(vec3(0.86, 0.9, 1.0) * core * along * uOpacity, 1.0);
-      }`
-    })
-      , a = 6
-      , o = new Si(.07,.08,.16,16);
-    o.rotateX(Math.PI / 2);
-    let c = new wr(.062,16)
-      , l = new Si(.75,.06,a,24,1,!0);
-    l.rotateX(Math.PI / 2),
-    l.translate(0, 0, .09 + a / 2);
-    let h = new Ct(.2,.03,.18)
-      , u = new Ct(.02,.13,.02);
-    for (let f of [-1, 1])
-        for (let d of e) {
-            let m = new be(h,n);
-            m.position.set(d, .025, f * i);
-            for (let v of [-1, 1]) {
-                let _ = new be(u,n);
-                _.position.set(v * .09, .08, 0),
-                m.add(_)
-            }
-            let b = new Bt;
-            b.position.set(d, .14, f * i),
-            b.lookAt(d + 1.5, 9, f * (i + 3));
-            let g = new be(o,n)
-              , p = new be(c,s);
-            p.position.z = .082;
-            let x = new be(l,r);
-            x.renderOrder = 5,
-            Li.beams.push(x),
-            b.add(g, p, x),
-            Cf.add(m, b)
-        }
-    Pf(!1)
-}
-)();
-var Re = {
-    g: 9.81,
-    dryMass: 1850,
-    airMass: 242,
-    suctionN: 41e3,
-    wingN: 700 * 9.81,
-    vTop: 374 / 3.6,
-    fanSpool: .4,
-    mu: 1.2,
-    muLoadDrop: .06,
-    powerW: 12e5,
-    launchAccel: 14,
-    brakeG: 1.6,
-    rho: 1.225,
-    CdA: .5,
-    rollC: .012,
-    maxSteer: .55,
-    wheelbase: 2.77,
-    thrustN: 6e4,
-    rearN: 8e4,
-    attN: 5e3,
-    sideN: 4e3,
-    inertia: [3780, 4230, 950],
-    armLong: 1.9,
-    armLat: .95,
-    suspTravel: .25,
-    suspW: 9,
-    suspZeta: .45,
-    veWarm: 520
-}
-  , Eo = () => Re.dryMass + Re.airMass * A.gas;
-var ff = i => Re.wingN * Math.min(1, (i / Re.vTop) ** 2) / Eo()
-  , If = i => Re.mu * Math.max(.7, 1 - Re.muLoadDrop * Math.max(0, i / Re.g - 1))
-  , pf = dt.map(i => i.s)
-  , Or = ai.s;
-function Fr(i) {
-    if (i < 0 || i > Or) {
-        let a = i < 0 ? dt[0] : ai
-          , o = i < 0 ? i : i - Or;
-        return {
-            x: a.p.x + Math.cos(a.th) * o,
-            y: a.p.y + Math.sin(a.th) * o,
-            th: a.th,
-            kappa: 0
-        }
-    }
-    let e = 0
-      , t = pf.length - 1;
-    for (; t - e > 1; ) {
-        let a = e + t >> 1;
-        pf[a] <= i ? e = a : t = a
-    }
-    let n = dt[e]
-      , s = dt[t]
-      , r = s.s > n.s ? (i - n.s) / (s.s - n.s) : 0;
-    return {
-        x: n.p.x + (s.p.x - n.p.x) * r,
-        y: n.p.y + (s.p.y - n.p.y) * r,
-        th: n.th + (s.th - n.th) * r,
-        kappa: (s.th - n.th) / Math.max(1e-6, s.s - n.s)
-    }
-}
-var $i = dt[0].p.x
-  , Wx = $i - 7.3
-  , on = {}
-  , A = {
-    mode: "ground",
-    x: un.start.x,
-    z: un.start.z,
-    yaw: un.start.heading,
-    v: 0,
-    s: 0,
-    lat: 0,
-    psi: 0,
-    steer: 0,
-    pos: new q,
-    vel: new q,
-    angVel: new q,
-    quat: new wt,
-    fan: 1,
-    fanOn: !0,
-    N: 3 * 9.81,
-    chase: !1,
-    msg: "",
-    zHold: 0,
-    susp: {
-        h: 0,
-        v: 0,
-        pitch: 0,
-        pv: 0
-    },
-    aLong: 0,
-    firing: {
-        rear: !1,
-        lift: !1,
-        side: !1,
-        level: new Float32Array(10)
-    },
-    gas: 1,
-     allowRamp: !1,
-     damage: 0,
-     blown: !1,
-     flyMode: !1,
-     thrustUp: !1,
-     descend: !1
-};
-function Xx() {
-    Object.assign(A, {
-        mode: "ground",
-        x: un.start.x,
-        z: un.start.z,
-        yaw: un.start.heading,
-        v: 0,
-        steer: 0,
-        msg: "",
-        gas: 1
-    }),
-    Object.assign(A.susp, {
-        h: 0,
-        v: 0,
-        pitch: 0,
-        pv: 0
-    })
-}
-addEventListener("keydown", i => {
-    on[i.code] = !0,
-    i.code === "KeyV" && (A.flyMode = !A.flyMode, A.msg = A.flyMode ? "FLY MODE" : "FLY OFF", A.flyMode ? (A.mode = "air", A.pos.copy(Pe.position), A.pos.y = Math.max(A.pos.y, 3.0), A.quat.copy(Pe.quaternion), A.vel.set(0,0,0), A.angVel.set(0,0,0), A.headHold = A.yaw, A.thrustUp = true, A.descend = false) : (A.mode = "ground", A.pos.copy(Pe.position), A.vel.set(0,0,0), A.angVel.set(0,0,0))),
-    i.code === "KeyE" && A.flyMode && (A.thrustUp = true, A.descend = false, A.msg = "THRUST UP"),
-    i.code === "Space" && A.flyMode && (A.descend = true, A.thrustUp = false, A.vel.y = -4, A.msg = "DESCEND"),
-    ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(i.code) && i.preventDefault(),
-    i.code === "KeyF" && (A.fanOn = !A.fanOn),
-    i.code === "KeyR" && (typeof switchLoc === "function" && switchLoc(currentLoc)),
-    i.code === "KeyC" && mf(!A.chase),
-    /^Digit[1-9]$/.test(i.code) && mf(!1)
-}
-);
-addEventListener("keyup", i => {
-    on[i.code] = !1
-}
-);
+addEventListener("keydown", event => {
+    const wasDown = on[event.code];
+    on[event.code] = true;
+    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(event.code)) event.preventDefault();
+    if (event.repeat || wasDown) return;
+    if (event.code === "KeyE") toggleFlight(vehicle);
+    if (event.code === "KeyR") resetCity();
+    if (event.code === "KeyQ") adjustFlightAltitude(vehicle,FLIGHT.altitudeStep);
+    if (event.code === "KeyZ") adjustFlightAltitude(vehicle,-FLIGHT.altitudeStep);
+    if (event.code === "KeyC") mf(!A.chase);
+    if (event.code === "KeyL") Nf();
+});
+addEventListener("keyup", event => { on[event.code] = false; });
+function clearControls() { for (const key of Object.keys(on)) on[key] = false; }
+addEventListener("blur", clearControls);
+document.addEventListener("visibilitychange", () => { if (document.hidden) clearControls(); });
 function mf(i) {
     A.chase = i,
     hn.enabled = !i,
-    i || (_t.up.set(0, 1, 0),
+    i || (hn.target.copy(Wh), _t.up.set(0, 1, 0),
     hn.update())
 }
-var qx = new Le
-  , py = new q
-  , my = new q
-  , gy = new q
-  , by = new wt;
-var Ks = 1.3844;
-function Lf(i, e, t) {
-    let n = Math.cos(t)
-      , s = Math.sin(t)
-      , r = Fr(i + Ks * n)
-      , a = Fr(i - Ks * n)
-      , o = Fr(i)
-      , c = new q(r.x,r.y,e + Ks * s)
-      , l = new q(a.x,a.y,e - Ks * s)
-      , h = new q(-Math.sin(r.th),Math.cos(r.th),0)
-      , u = new q(-Math.sin(a.th),Math.cos(a.th),0)
-      , f = c.clone().sub(l).normalize()
-      , d = h.add(u).normalize();
-    d.addScaledVector(f, -d.dot(f)).normalize();
-    let m = new q().crossVectors(d, f);
-    Pe.quaternion.setFromRotationMatrix(qx.makeBasis(m, d, f)),
-    Pe.position.copy(c).add(l).multiplyScalar(.5).addScaledVector(d, Math.max(0, o.kappa) * .35)
-}
-var Th = .75
-  , Ah = .55;
-function gf(i, e) {
-    let t = 0
-      , n = 1 / 0;
-    for (let r = 0; r < dt.length; r += 2) {
-        let a = dt[r]
-          , o = i - a.p.x
-          , c = e - a.p.y
-          , l = o * o + c * c;
-        l < n && (n = l,
-        t = r)
+function Qx(dt) {
+    if(sceneLoading)return;
+    syncForest();
+    const shifted=!!(on.ShiftLeft||on.ShiftRight);
+    const up=!!(on.KeyW||on.ArrowUp),down=!!(on.KeyS||on.ArrowDown);
+    const left=!!(on.KeyA||on.ArrowLeft),right=!!(on.KeyD||on.ArrowRight);
+    const beforeX=vehicle.x;
+    stepVehicle(vehicle, {
+        forward:shifted?0:+up,back:shifted?0:+down,
+        turn:shifted?0:+right-+left,
+        boost:!!on.KeyB||(shifted&&up),descend:!!on.Space,
+        climb:!!on.KeyT||(shifted&&down),strafe:shifted?(+left-+right):0
+    },dt,activeColliders);
+    if(activeScene==='ramp'&&!vehicle.flight&&!vehicle.ramp&&beforeX < -3&&vehicle.x>=-3&&Math.abs(vehicle.z)<1.85&&vehicle.vx>0)attachRamp(vehicle);
+    A.mode = vehicle.flight ? "air" : "ground";
+    A.flyMode = vehicle.flight; A.x = vehicle.x; A.z = vehicle.z; A.yaw = vehicle.yaw;
+    A.v = vehicle.speed; A.steer = vehicle.steer; A.aLong = vehicle.acceleration;
+    A.pos.set(vehicle.x,vehicle.y,vehicle.z); A.vel.set(vehicle.vx,vehicle.vy,vehicle.vz);
+    A.angVel.set(0,vehicle.yawRate,0);
+    A.quat.setFromAxisAngle(new q(0,1,0),vehicle.yaw);
+    if(vehicle.flight) A.quat.multiply(new wt().setFromAxisAngle(new q(1,0,0),vehicle.pitch))
+      .multiply(new wt().setFromAxisAngle(new q(0,0,1),vehicle.roll));
+    if(vehicle.rampFrame){const f=new q(...vehicle.rampFrame.forward),u=new q(...vehicle.rampFrame.up),r=u.clone().cross(f).normalize();A.quat.setFromRotationMatrix(new Le().makeBasis(r,u,f));}
+    if(vehicle.rampRecovery){
+      const recovery=vehicle.rampRecovery,f=new q(...recovery.frame.forward),u=new q(...recovery.frame.up),r=u.clone().cross(f).normalize();
+      const from=new wt().setFromRotationMatrix(new Le().makeBasis(r,u,f));
+      const t=Math.min(1,recovery.elapsed/recovery.duration),ease=t*t*(3-2*t);
+      if(!recovery.target)recovery.target=new wt().setFromAxisAngle(new q(0,1,0),vehicle.yaw);
+      A.quat.copy(from.slerp(recovery.target,ease));
     }
-    for (let r = Math.max(0, t - 2); r <= Math.min(dt.length - 1, t + 2); r++) {
-        let a = dt[r]
-          , o = i - a.p.x
-          , c = e - a.p.y
-          , l = o * o + c * c;
-        l < n && (n = l,
-        t = r)
-    }
-    let s = dt[t];
-    return {
-        q: s,
-        d: (i - s.p.x) * s.n.x + (e - s.p.y) * s.n.y
-    }
-}
-function jx() {
-    let i = new q(0,1,0).applyQuaternion(A.quat)
-      , e = A.pos.clone().addScaledVector(i, Ah);
-    if (Math.abs(e.z) > at / 2 + Th)
-        return !1;
-    let t = gf(e.x, e.y)
-      , n = t.q;
-    if (n.s <= .05 || n.s >= Or - .05) {
-        let l = (e.x - n.p.x) * n.t.x + (e.y - n.p.y) * n.t.y;
-        if (n.s <= .05 && l < 0 || n.s >= Or - .05 && l > 0)
-            return !1
-    }
-    let s = new q(n.n.x,n.n.y,0)
-      , r = A.vel.dot(s)
-      , a = gf(A.pos.x, A.pos.y);
-    if (Math.abs(A.pos.z) < at / 2 && t.d > 0 && a.d <= .02 && i.dot(s) > .3 && r < -.05) {
-        let l = a.q
-          , h = new q(Math.cos(l.th),Math.sin(l.th),0)
-          , u = new q(0,0,1)
-          , f = new q(0,0,1).applyQuaternion(A.quat)
-          , d = Math.atan2(f.dot(u), f.dot(h));
-        A.flyMode && (A.flyMode = false, A.msg = "FLY OFF (landed)");
-        return Object.assign(A, {
-            mode: "ramp",
-            s: l.s,
-            lat: A.pos.z,
-            psi: d,
-            msg: "landed on the ramp"
-        }),
-        A.v = A.vel.dot(h.clone().multiplyScalar(Math.cos(d)).add(u.clone().multiplyScalar(Math.sin(d)))),
-        Lf(A.s, A.lat, A.psi),
-        !0
-    }
-    let c = t.d > -cn / 2;
-    if (c ? t.d < Ah - .15 : t.d > -cn - Th) {
-        let h = (c ? Ah : -cn - Th) - t.d;
-        A.pos.addScaledVector(s, h),
-        (c && r < 0 || !c && r > 0) && A.vel.addScaledVector(s, -r * 1.25),
-        A.vel.multiplyScalar(.9),
-        A.angVel.multiplyScalar(.5),
-        A.msg = c ? "hit the deck" : "hit the underside"
-    }
-    return !1
-}
-function Yx() {
-    if (A.blown) return {thr:0, brk:0, st:0, thrust:false, climb:false, boost:false};
-    if (A.flyMode) {
-        return {
-            thr: on.KeyW || on.ArrowUp ? 1 : 0,
-            brk: on.KeyS || on.ArrowDown ? 1 : 0,
-            st: (on.KeyD || on.ArrowRight ? 1 : 0) - (on.KeyA || on.ArrowLeft ? 1 : 0),
-            thrust: !!on.Space,
-            climb: !on.Space,
-            boost: !!on.KeyB
-        };
-    }
-    let i = on.KeyW || on.ArrowUp ? 1 : 0
-      , e = on.KeyS || on.ArrowDown ? 1 : 0
-      , t = (on.KeyD || on.ArrowRight ? 1 : 0) - (on.KeyA || on.ArrowLeft ? 1 : 0);
-    return {
-        thr: i,
-        brk: e,
-        st: t,
-        thrust: !!on.Space,
-        climb: !!on.KeyE,
-        boost: !!on.KeyB
-    }
-}
-function bf(i, e, t) {
-    let n = Eo()
-      , s = If(t) * Math.max(0, t)
-      , r = Math.abs(e)
-      , a = 0;
-    return i.thr && e < Re.vTop && (a += Math.min(Re.launchAccel, Re.powerW / (n * Math.max(1, r)), s)),
-    i.brk && (a += e > .5 ? -Math.min(Re.brakeG * Re.g, s) : e > -12 ? -Math.min(6, s) : 0),
-    a -= Math.sign(e) * (.5 * Re.rho * Re.CdA * e * e / n + (r > .05 ? Re.rollC * Re.g : 0)),
-    a
-}
-function _f(i, e, t) {
-    A.steer += (i.st * Re.maxSteer / (1 + Math.abs(e) * .04) - A.steer) * Math.min(1, t * 8);
-    let _yawRate = e * Math.tan(A.steer) / Re.wheelbase;
-    if (Math.abs(e) > 0.5) {
-        let _maxLat = Re.mu * Re.g * 0.85;
-        let _latAccel = Math.abs(e * _yawRate);
-        if (_latAccel > _maxLat) _yawRate *= _maxLat / _latAccel;
-    }
-    // weight transfer: reduce grip at high lateral load
-    let _loadFactor = 1 - Math.min(0.35, Math.abs(_yawRate * e) / (Re.g * 4));
-    _yawRate *= _loadFactor;
-    return _yawRate
-}
-function go(i, e, t, n) {
-    A.mode = "air",
-    A.pos.copy(Pe.position),
-    A.vel.copy(i).multiplyScalar(t),
-    A.quat.copy(Pe.quaternion),
-    A.angVel.set(0, 0, n),
-    A.zHold = A.pos.z;
-    let s = Math.hypot(A.vel.x, A.vel.z) > 1 ? A.vel : i;
-    A.headHold = Math.hypot(s.x, s.z) > .001 ? Math.atan2(s.x, s.z) : A.yaw
-}
-var Vh = new q(0,.55,0)
-  , Gh = null;
-function Kx() {
-    let i = Pe.position.clone()
-      , e = Pe.quaternion.clone();
-    Pe.position.set(0, 0, 0),
-    Pe.quaternion.identity(),
-    Pe.updateMatrixWorld(!0);
-    let t = []
-      , n = new q;
-    Pe.traverse(o => {
-        if (!o.isMesh || !o.geometry?.attributes?.position)
-            return;
-        let c = o.geometry.attributes.position
-          , l = Math.max(1, Math.floor(c.count / 1500));
-        for (let h = 0; h < c.count; h += l)
-            n.fromBufferAttribute(c, h).applyMatrix4(o.matrixWorld),
-            n.y > .1 && t.push(n.clone())
-    }
-    ),
-    Pe.position.copy(i),
-    Pe.quaternion.copy(e),
-    Pe.updateMatrixWorld(!0);
-    let s = [];
-    for (let o of [-.82, .82])
-        for (let c of [-Ks, Ks])
-            s.push({
-                p: new q(o,0,c),
-                wheel: !0
-            });
-    let r = 64
-      , a = Math.PI * (3 - Math.sqrt(5));
-    for (let o = 0; o < r; o++) {
-        let c = 1 - 2 * (o + .5) / r
-          , l = Math.sqrt(1 - c * c)
-          , h = new q(Math.cos(a * o) * l,c,Math.sin(a * o) * l)
-          , u = null
-          , f = -1 / 0;
-        for (let d of t) {
-            let m = d.dot(h);
-            m > f && (f = m,
-            u = d)
-        }
-        u && !s.some(d => d.p.distanceTo(u) < .08) && s.push({
-            p: u.clone(),
-            wheel: !1
-        })
-    }
-    Gh = s
-}
-function Zx(i) {
-    Gh || Kx();
-    let e = A.quat
-      , t = Re.inertia
-      , n = new Fe().setFromMatrix4(new Le().makeRotationFromQuaternion(e))
-      , s = n.clone().transpose()
-      , r = d => {
-        let m = d.clone().applyMatrix3(s);
-        return m.set(m.x / t[0], m.y / t[1], m.z / t[2]),
-        m.applyMatrix3(n)
-    }
-      , a = A.pos.clone().add(Vh.clone().applyQuaternion(e))
-      , o = new q(1,0,0).applyQuaternion(e)
-      , c = (d, m) => {
-        A.vel.addScaledVector(d, 1 / i),
-        A.angVel.add(r(new q().crossVectors(m, d)))
-    }
-      , l = new q(0,1,0)
-      , h = 0
-      , u = 0
-      , f = 0;
-    for (let d = 0; d < 2; d++)
-        for (let m of Gh) {
-            let b = m.p.clone().applyQuaternion(e).add(A.pos);
-            if (b.y > 0)
-                continue;
-            d === 0 && (u++,
-            h = Math.max(h, -b.y));
-            let g = b.clone().sub(a)
-              , p = A.vel.clone().add(new q().crossVectors(A.angVel, g));
-            if (p.y >= 0)
-                continue;
-            d === 0 && !m.wheel && (f = Math.max(f, -p.y));
-            let x = 1 / i + l.dot(new q().crossVectors(r(new q().crossVectors(g, l)), g))
-              , _ = -(1 + (d === 0 && p.y < -1.5 ? m.wheel ? .3 : .15 : 0)) * p.y / x;
-            c(l.clone().multiplyScalar(_), g);
-            let P = A.vel.clone().add(new q().crossVectors(A.angVel, g));
-            P.y = 0;
-            let E;
-            if (m.wheel) {
-                let M = new q(o.x,0,o.z);
-                if (M.lengthSq() < 1e-6)
-                    continue;
-                M.normalize(),
-                E = M.multiplyScalar(Math.sign(P.dot(M)) || 1)
-            } else
-                E = P.clone();
-            let R = P.dot(E.lengthSq() > 1e-9 ? E.normalize() : E);
-            if (R < 1e-4)
-                continue;
-            let L = 1 / i + E.dot(new q().crossVectors(r(new q().crossVectors(g, E)), g))
-              , w = Math.min(R / L, (m.wheel ? 1 : .55) * _);
-            c(E.multiplyScalar(-w), g)
-        }
-    if (h > 0 && (A.pos.y += h),
-    f > 4) {
-        let d = Math.min(.85, (f - 4) / 14);
-        A.angVel.multiplyScalar(1 - .75 * d),
-        A.vel.x *= 1 - .45 * d,
-        A.vel.z *= 1 - .45 * d,
-        A.vel.y > 0 && (A.vel.y *= 1 - .6 * d)
-    }
-    if (u) {
-        A.vel.length() < .2 && A.angVel.length() < .2 && (A.vel.multiplyScalar(.8),
-        A.angVel.multiplyScalar(.8));
-        let d = new q(0,1,0).applyQuaternion(e);
-        if (A.vel.length() < .5 && A.angVel.length() < .5)
-            if (d.y > .85) {
-                let m = new q(0,0,1).applyQuaternion(e);
-                m.y = 0,
-                A.yaw = Math.atan2(m.x, m.z),
-                A.v = 0,
-                A.msg = "landed",
-                A.mode = "ground",
-                A.x = A.pos.x,
-                A.z = A.pos.z,
-                A.susp.h = 0,
-                A.susp.v = 0
-            } else
-                A.msg = d.y < -.5 ? "on its roof (R to reset)" : "on its side (R to reset)";
-        else
-            d.y < .3 && (A.msg = "crash")
-    }
-}
-function Jx(i) {
-    let e = A.susp
-      , t = Re.suspW
-      , n = Re.suspZeta;
-    e.v += (-t * t * e.h - 2 * n * t * e.v) * i,
-    e.h += e.v * i,
-    e.h < -Re.suspTravel && (e.h = -Re.suspTravel,
-    e.v = Math.max(0, e.v));
-    let s = Jt.clamp(-A.aLong * .007, -.06, .06)
-      , r = 7;
-    e.pv += (r * r * (s - e.pitch) - 2 * .5 * r * e.pv) * i,
-    e.pitch += e.pv * i
-}
-function Qx(i) {
-    if (A.flyMode) {
-        if (A.blown) return;
-        if (A.pos.y <= 0.15) {
-            A.flyMode = false;
-            A.mode = "ground";
-            A.pos.y = 0;
-            A.vel.set(0,0,0);
-            A.angVel.set(0,0,0);
-            Pe.position.copy(A.pos);
-            Pe.quaternion.setFromAxisAngle(new q(0,1,0), A.yaw);
-            A.msg = "FLY OFF (landed)";
-            return;
-        }
-        if (A.mode !== "air") {
-            A.mode = "air";
-            A.pos.copy(Pe.position);
-            if (A.pos.y < 3) A.pos.y = 3;
-            A.quat.copy(Pe.quaternion);
-            A.vel.set(0,0,0);
-            A.angVel.set(0,0,0);
-        }
-        let _fwd = (on.KeyW || on.ArrowUp) ? 1 : 0;
-        let _back = (on.KeyS || on.ArrowDown) ? 1 : 0;
-        let _left = (on.KeyA || on.ArrowLeft) ? 1 : 0;
-        let _right = (on.KeyD || on.ArrowRight) ? 1 : 0;
-        // horizontal thrust
-        let _boost = on.KeyB ? 2.2 : 1;
-        let _thrust = (_fwd - _back) * 14 * _boost;
-        A.vel.x += Math.sin(A.yaw) * _thrust * i;
-        A.vel.z += Math.cos(A.yaw) * _thrust * i;
-        // vertical
-        if (A.thrustUp) {
-            if (A.pos.y < 6) A.vel.y += 18 * i;
-            else A.vel.y = Math.min(A.vel.y, 0);
-        }
-        if (A.descend) A.vel.y -= 10 * i;
-        if (!A.thrustUp && !A.descend) A.vel.y += (3.0 - A.pos.y) * 3.0 * i;
-        A.vel.y -= Re.g * 0.15 * i;
-        if (A.pos.y > 8) A.pos.y = 8;
-        // drag
-        A.vel.x *= (1 - 1.2 * i);
-        A.vel.z *= (1 - 1.2 * i);
-        A.vel.y *= (1 - 0.5 * i);
-        // clamp
-        if (A.vel.y > 8) A.vel.y = 8;
-        if (A.vel.y < -10) A.vel.y = -10;
-        A.pos.addScaledVector(A.vel, i);
-        if (A.pos.y < 0.3) { A.pos.y = 0.3; A.vel.y = 0; }
-        // collision with buildings (horizontal push)
-        if (activeBuildings && activeBuildings.length) {
-            for (let _b of activeBuildings) {
-                let dx = A.pos.x - _b.x, dz = A.pos.z - _b.z;
-                if (Math.abs(dx) < _b.hx && Math.abs(dz) < _b.hz) {
-                    let penX = _b.hx - Math.abs(dx);
-                    let penZ = _b.hz - Math.abs(dz);
-                    if (penX < penZ) {
-                        A.pos.x += (dx >= 0 ? 1 : -1) * (penX + 0.1);
-                        A.vel.x *= -0.3;
-                    } else {
-                        A.pos.z += (dz >= 0 ? 1 : -1) * (penZ + 0.1);
-                        A.vel.z *= -0.3;
-                    }
-                }
-            }
-        }
-        // side thrusters for turning
-        let _fireRight = _left > 0 ? 1 : 0;
-        let _fireLeft = _right > 0 ? 1 : 0;
-        let _sideThrust = Re.sideN * 2.5;
-        let _torque = (_fireLeft - _fireRight) * _sideThrust * 2.0;
-        A.angVel.y += (_torque / (Re.inertia[1] * 0.6)) * i;
-        A.angVel.y *= (1 - 0.6 * i);
-        if (A.angVel.y > 4) A.angVel.y = 4;
-        if (A.angVel.y < -4) A.angVel.y = -4;
-        A.yaw += A.angVel.y * i;
-        // firing levels
-        let _fl = A.firing.level;
-        _fl.fill(0);
-        for (let _ti = 4; _ti < 8; _ti++) _fl[_ti] = A.thrustUp ? 1 : (A.descend ? 0.3 : 0.6);
-        if (_fwd > 0) for (let _ti = 0; _ti < 4; _ti++) _fl[_ti] = on.KeyB ? 1 : 0.5;
-        if (on.KeyB) for (let _ti = 0; _ti < 4; _ti++) _fl[_ti] = 1;
-        _fl[8] = _fireRight;
-        _fl[9] = _fireLeft;
-        A._fireRight = _fireRight;
-        A._fireLeft = _fireLeft;
-        if (on.Space && A.pos.y <= 1.5) {
-            A.flyMode = false;
-            A.mode = "ground";
-            A.pos.y = 0;
-            A.vel.set(0,0,0);
-            A.angVel.set(0,0,0);
-            Pe.position.copy(A.pos);
-            Pe.quaternion.setFromAxisAngle(new q(0,1,0), A.yaw);
-            A.msg = "FLY OFF (landed)";
-            return;
-        }
-        if (A.pos.y <= 0.3) {
-            A.flyMode = false;
-            A.mode = "ground";
-            A.pos.y = 0;
-            A.vel.set(0,0,0);
-            A.angVel.set(0,0,0);
-            Pe.position.copy(A.pos);
-            Pe.quaternion.setFromAxisAngle(new q(0,1,0), A.yaw);
-            A.msg = "FLY OFF (landed)";
-            return;
-        }
-        Pe.position.copy(A.pos);
-        Pe.quaternion.setFromAxisAngle(new q(0,1,0), A.yaw);
-        A.msg = "FLY";
-        return;
-    }
-    let e = Yx();
-    if (A.flyMode) {
-        let _fl = A.firing.level;
-        _fl.fill(0);
-        for (let _ti = 4; _ti < 8; _ti++) _fl[_ti] = on.KeyE || !on.Space ? 0.7 : 0.3;
-        if (on.KeyW || on.ArrowUp) for (let _ti = 0; _ti < 4; _ti++) _fl[_ti] = on.KeyB ? 1 : 0.5;
-        if (on.KeyB) for (let _ti = 0; _ti < 4; _ti++) _fl[_ti] = 1;
-        _fl[8] = (on.KeyA || on.ArrowLeft) ? 1 : 0;
-        _fl[9] = (on.KeyD || on.ArrowRight) ? 1 : 0;
-    }
-    A.fan += ((A.fanOn && !e.thrust && !e.climb ? 1 : 0) - A.fan) * Math.min(1, i / Re.fanSpool * 3);
-    let t = Eo()
-      , n = Re.suctionN * A.fan / t
-      , s = A.firing.level;
-    s.fill(0),
-    e.boost && s.fill(1, 0, 4),
-    e.climb && A.mode !== "air" && s.fill(1, 4, 8);
-    let r = e.boost && Math.abs(A.v) < Re.vTop ? Re.rearN / t : 0
-      , a = e.climb ? Re.thrustN / t : 0;
-    if (A.mode === "ground") {
-        A.N = Re.g + n + ff(Math.abs(A.v)) - a,
-        A.aLong = bf(e, A.v, A.N) + r,
-        A.v += A.aLong * i,
-        !e.thr && !e.brk && !e.boost && Math.abs(A.v) < .1 && (A.v = 0),
-        Jx(i),
-        A.yaw += _f(e, A.v, i) * i;
-        let o = A.x;
-        A.x += Math.sin(A.yaw) * A.v * i,
-        A.z += Math.cos(A.yaw) * A.v * i,
-        o < $i && A.x >= $i && Math.abs(A.z) < at / 2 && A.v > 0 && A.allowRamp ? (A.mode = "ramp",
-        A.s = A.x - $i,
-        A.lat = A.z,
-        A.psi = Math.atan2(Math.cos(A.yaw), Math.sin(A.yaw))) : (A.allowRamp && o < $i + 6 && A.x >= $i && Math.abs(A.z) < at / 2 + 1) && (A.x = o,
-        A.v = 0,
-        A.msg = "blocked by the ramp edge");
-        // building collision (city)
-        if (!A.blown && activeBuildings && activeBuildings.length) {
-            for (let _b of activeBuildings) {
-                let dx = A.x - _b.x, dz = A.z - _b.z;
-                if (Math.abs(dx) < _b.hx && Math.abs(dz) < _b.hz) {
-                    let penX = _b.hx - Math.abs(dx);
-                    let penZ = _b.hz - Math.abs(dz);
-                    if (penX < penZ) {
-                        A.x += (dx >= 0 ? 1 : -1) * (penX + 0.05);
-                        A.v *= 0.3;
-                        A.damage += Math.min(8, Math.abs(A.v) * 2);
-                    } else {
-                        A.z += (dz >= 0 ? 1 : -1) * (penZ + 0.05);
-                        A.v *= 0.3;
-                        A.damage += Math.min(8, Math.abs(A.v) * 2);
-                    }
-                    if (A.damage >= 100) { A.damage = 100; A.blown = !0; }
-                }
-            }
-        }
-        let c = A.allowRamp && A.x > Wx && Math.abs(A.z) < at / 2;
-        Pe.position.set(A.x, (c ? .02 : 0) + A.susp.h, A.z),
-        Pe.quaternion.setFromAxisAngle(new q(0,1,0), A.yaw).multiply(new wt().setFromAxisAngle(new q(1,0,0), A.susp.pitch)),
-        A.N < 0 && (Pe.updateMatrixWorld(),
-        go(new q(Math.sin(A.yaw),0,Math.cos(A.yaw)), null, A.v, 0),
-        A.pos.y += .02,
-        A.msg = "lift-off")
-    } else if (A.mode === "ramp") {
-        let o = Fr(A.s)
-          , c = A.v * Math.cos(A.psi);
-        A.N = c * c * o.kappa + n + ff(Math.abs(A.v)) + Re.g * Math.cos(o.th) - a;
-        let l = -Re.g * Math.sin(o.th) * Math.cos(A.psi)
-          , h = bf(e, A.v, A.N) + l + r;
-        A.susp.h = 0,
-        A.susp.v = 0,
-        A.susp.pitch = 0,
-        A.susp.pv = 0,
-        !e.thr && Math.abs(A.v) < .3 && Math.abs(l) <= If(A.N) * Math.max(0, A.N) && e.brk && (h = 0,
-        A.v = 0),
-        A.v += h * i,
-        A.psi -= _f(e, A.v, i) * i,
-        A.s += A.v * Math.cos(A.psi) * i,
-        A.lat += A.v * Math.sin(A.psi) * i;
-        let u = Fr(A.s);
-        Lf(A.s, A.lat, A.psi);
-        let f = new q(0,0,1).applyQuaternion(Pe.quaternion)
-          , d = new q(0,1,0).applyQuaternion(Pe.quaternion);
-        A.s < 0 ? (A.mode = "ground",
-        A.x = $i + A.s,
-        A.z = A.lat,
-        A.yaw = Math.PI / 2 - A.psi) : A.s >= Or ? (go(f, d, A.v, 0),
-        A.msg = "off the lip") : Math.abs(A.lat) > at / 2 + .2 ? (go(f, d, A.v, 0),
-        A.msg = "off the side") : A.N < 0 && (go(f, d, A.v, u.kappa * c),
-        A.msg = e.climb ? "thrusters: pushed off" : A.fan < .5 ? "no suction: fell off" : "not enough grip")
-    } else {
-        let o = A.quat
-          , c = o.clone().invert()
-          , l = new q(0,0,1).applyQuaternion(o)
-          , h = new q(0,1,0).applyQuaternion(o)
-          , u = new q(1,0,0).applyQuaternion(o)
-          , f = new q(0,-Re.g * t,0);
-        f.addScaledVector(A.vel, -.5 * Re.rho * Re.CdA * A.vel.length()),
-        e.boost && f.addScaledVector(l, Re.rearN);
-        let d = Re.inertia
-          , m = A.angVel.clone().applyQuaternion(c)
-          , b = new q;
-        if (A.flyMode) {
-            A.headHold += ((on.KeyD || on.ArrowRight ? 1 : 0) - (on.KeyA || on.ArrowLeft ? 1 : 0)) * 1.8 * i;
-        }
-        if (e.thrust || e.climb) {
-            let P = Math.max(0, A.pos.y)
-              , E = e.climb ? 4 : -(.5 + 2.5 * Math.min(1, P / 5))
-              , R = Jt.clamp(2.2 * (E - A.vel.y), -6, 8)
-              , L = new q(-1.3 * A.vel.x,0,-1.3 * A.vel.z - .8 * (A.pos.z - A.zHold))
-              , w = Re.g * Math.tan(.52);
-            L.length() > w && L.setLength(w);
-            let M = new q(L.x,Math.max(.5, Re.g + R),L.z), I, H;
-            if (h.y < .8)
-                H = l.clone(),
-                I = new q(0,1,0).addScaledVector(l, -l.y),
-                I.lengthSq() < 1e-6 ? I.set(0, 1, 0) : I.normalize();
-            else {
-                I = M.clone().normalize();
-                let _e = new q(Math.sin(A.headHold),0,Math.cos(A.headHold));
-                H = _e.addScaledVector(I, -_e.dot(I)).normalize()
-            }
-            let B = new wt().setFromRotationMatrix(new Le().makeBasis(new q().crossVectors(I, H), I, H))
-              , V = c.clone().multiply(B);
-            V.w < 0 && (V.x = -V.x,
-            V.y = -V.y,
-            V.z = -V.z,
-            V.w = -V.w);
-            let J = 2 * Math.acos(Math.min(1, V.w))
-              , X = Math.sqrt(Math.max(1e-12, 1 - V.w * V.w))
-              , ee = [V.x / X * J, V.y / X * J, V.z / X * J]
-              , G = [m.x, m.y, m.z]
-              , se = Re.thrustN / 4
-              , fe = _o.slice(4, 8)
-              , Ee = 2 * Re.attN * 1.62
-              , Ve = fe.reduce( (_e, nt) => _e + Math.abs(nt.p.z), 0) / 4
-              , tt = fe.reduce( (_e, nt) => _e + Math.abs(nt.p.x), 0) / 4
-              , j = [2 * se * Ve, Ee, 2 * se * tt]
-              , $ = [0, 0, 0];
-            for (let _e = 0; _e < 3; _e++) {
-                let nt = j[_e] / d[_e]
-                  , U = Math.sign(ee[_e]) * Math.min(Math.sqrt(2 * .7 * nt * Math.abs(ee[_e])), 5);
-                $[_e] = Jt.clamp(d[_e] * (U - G[_e]) * 10, -j[_e], j[_e])
-            }
-            let ae = h.dot(I) > .8 ? Math.min(Re.thrustN, t * M.length()) : 0
-              , Te = 0
-              , De = 0
-              , ke = 0;
-            if (A.flyMode) ae *= 0.35;
-            fe.forEach( (_e, nt) => {
-                let U = Jt.clamp(ae / 4 - $[0] * Math.sign(_e.p.z) / (4 * Math.abs(_e.p.z)) + $[2] * Math.sign(_e.p.x) / (4 * Math.abs(_e.p.x)), 0, se);
-                Te += U,
-                De += -_e.p.z * U,
-                ke += _e.p.x * U,
-                s[4 + nt] = U / se
-            }
-            );
-            let ot = Jt.clamp($[1] / 1.62, -Re.attN, Re.attN);
-            s[ot > 0 ? 9 : 8] = Math.abs(ot) / Re.attN,
-            f.addScaledVector(h, Te).addScaledVector(u, ot),
-            b.set(De, $[1], ke)
-        }
-        let g = new q(d[0] * m.x,d[1] * m.y,d[2] * m.z)
-          , p = new q().crossVectors(m, g);
-        m.x += (b.x - p.x) / d[0] * i,
-        m.y += (b.y - p.y) / d[1] * i,
-        m.z += (b.z - p.z) / d[2] * i,
-        A.angVel.copy(m).applyQuaternion(o),
-        A.vel.addScaledVector(f, i / t);
-        let x = A.pos.clone().add(Vh.clone().applyQuaternion(A.quat)).addScaledVector(A.vel, i)
-          , v = A.angVel.length();
-        if (v > 1e-5 && A.quat.premultiply(new wt().setFromAxisAngle(A.angVel.clone().normalize(), v * i)),
-        A.pos.copy(x).sub(Vh.clone().applyQuaternion(A.quat)),
-        jx())
-            return;
-        let _ = new q(0,1,0).applyQuaternion(A.quat);
-        if (A.pos.y <= 0 && A.vel.y <= 0 && _.y > .85 && A.angVel.length() < 2.5) {
-            let P = new q(0,0,1).applyQuaternion(A.quat)
-              , E = _;
-            P.y = 0,
-            A.yaw = P.lengthSq() > 1e-4 ? Math.atan2(P.x, P.z) : A.yaw;
-            let R = -A.vel.y
-              , L = new q(Math.sin(A.yaw),0,Math.cos(A.yaw))
-              , w = Re.suspTravel * Re.suspW * 1.3
-              , M = A.vel.dot(L)
-              , I = new q(A.vel.x,0,A.vel.z).addScaledVector(L, -M)
-              , H = Math.min(I.length(), Re.mu * R * 1.5);
-            if (I.length() > 1e-6 && I.multiplyScalar(1 - H / I.length()),
-            R > w) {
-                let B = .3 * Math.sqrt(R * R - w * w);
-                if (M *= .85,
-                B > .8) {
-                    A.vel.copy(L).multiplyScalar(M).add(I),
-                    A.vel.y = B,
-                    A.pos.y = .001,
-                    A.angVel.multiplyScalar(.4),
-                    A.msg = "hard landing: bottomed out (" + R.toFixed(1) + " m/s)",
-                    Pe.position.copy(A.pos),
-                    Pe.quaternion.copy(A.quat);
-                    return
-                }
-                A.msg = "hard landing (" + R.toFixed(1) + " m/s)"
-            } else
-                A.msg = "landed (" + R.toFixed(1) + " m/s)";
-            A.v = M,
-            A.susp.v = -Math.min(R, w),
-            A.susp.h = 0,
-            A.susp.pv = 0,
-            A.mode = "ground",
-            A.x = A.pos.x,
-            A.z = A.pos.z
-        } else
-            Zx(t),
-            Pe.position.copy(A.pos),
-            Pe.quaternion.copy(A.quat),
-            A.flyMode && ((on.Space && A.pos.y <= 1.5) || A.pos.y <= 0.3) && (A.flyMode = false, A.mode = "ground", A.pos.y = 0, A.vel.set(0,0,0), A.angVel.set(0,0,0), Pe.position.copy(A.pos), Pe.quaternion.setFromAxisAngle(new q(0,1,0), A.yaw), A.msg = "FLY OFF (landed)")
-    }
+    const jets=vehicle.thrusters, levels=A.firing.level;
+    levels.fill(0);levels.fill(jets.rear,0,4);levels.fill(jets.lift,4,8);
+    // Opposite front/rear side jets form a yaw couple, rather than a sideways shove.
+    levels[8]=Math.min(1,jets.right+jets.strafeRight);levels[11]=Math.min(1,jets.right+jets.strafeLeft);
+    levels[9]=Math.min(1,jets.left+jets.strafeLeft);levels[10]=Math.min(1,jets.left+jets.strafeRight);
+    levels[12]=levels[13]=jets.front;
+
 }
 var Zh = document.createElement("div");
 Zh.id = "hud";
 var $x = Zh
   , Jh = document.createElement("div");
 Jh.id = "keys";
-Jh.textContent = "WASD drive \xB7 E lift \xB7 Space drop \xB7 B boost \xB7 F fan \xB7 C cam \xB7 L lamps \xB7 R reset \xB7 1\u20135 views";
-document.body.append(Zh, Jh);
+Jh.innerHTML = '<span>WASD drive</span><span id="flight-hint">E take flight</span><span>B boost · C camera · R reset</span>';
+Zh.innerHTML = '<div class="hud-label">ROADSTER <span id="drive-status">DRIVE</span></div><div class="speed"><strong id="speed-value">0</strong><span>KM/H</span></div><div class="energy"><div class="energy-label"><span id="charge-phase">THRUST</span><span id="charge-value">100%</span></div><div class="charge-row"><div id="charge-meter" role="progressbar" aria-label="Thruster charge" aria-valuemin="0" aria-valuemax="100"><i id="charge-fill"></i></div><label class="infinite-control" title="Infinite boosters"><input id="infinite-boosters" type="checkbox" aria-label="Infinite boosters"><span aria-hidden="true">∞</span></label></div></div>';
+document.body.append(Zh,Jh);
+const launchReadout=document.createElement('div');launchReadout.className='launch-readout';launchReadout.textContent='0–60 MPH —';Zh.append(launchReadout);
+document.getElementById('infinite-boosters').addEventListener('change',event=>{setInfiniteBoosters(vehicle,event.target.checked);ev(.1);});
 var Rh = 0;
-function ev(i) {
-    if (Rh += i,
-    Rh < .1)
-        return;
-    Rh = 0;
-    let e = Math.abs(A.mode === "air" ? A.vel.length() : A.v) * 3.6
-      , t = A.mode === "air" ? "\u2014" : (A.N / Re.g).toFixed(2) + " G";
-    $x.textContent = `${e.toFixed(0)} km/h \xB7 fan ${A.fanOn ? (A.fan * Re.suctionN / Eo() / Re.g).toFixed(1) + " G" : "off"} \xB7 contact ${t} \xB7 dmg ${A.damage.toFixed(0)}% \xB7 ${A.mode}${A.msg ? " \xB7 " + A.msg : ""}`
+function ev(dt) {
+    Rh += dt; if (Rh < .1) return; Rh = 0;
+    document.getElementById('speed-value').textContent = Math.round(Math.hypot(vehicle.vx,vehicle.vz)*3.6);
+    document.getElementById('drive-status').textContent = vehicle.flight ? (vehicle.forcedLanding ? 'RESERVE LANDING' : vehicle.landing ? 'LANDING' : 'FLIGHT · '+vehicle.y.toFixed(0)+' → '+vehicle.altitude.toFixed(0)+' M') : 'DRIVE';
+    document.getElementById('flight-hint').textContent=vehicle.forcedLanding?'Auto landing · recharge on ground':vehicle.recharging?'Thrusters recharging':vehicle.flight?'Shift+WASD jets · Q/Z height · Space descend':'E take flight';
+    const percent=Math.round((vehicle.infiniteBoosters?1:vehicle.charge)*100);
+    document.getElementById('charge-value').textContent=vehicle.infiniteBoosters?'∞':percent+'%';
+    document.getElementById('charge-fill').style.transform='scaleX('+(vehicle.infiniteBoosters?1:vehicle.charge)+')';
+    document.getElementById('charge-meter').setAttribute('aria-valuenow',percent);
+    document.getElementById('charge-phase').textContent=vehicle.infiniteBoosters?'INFINITE':vehicle.forcedLanding?'RESERVE':vehicle.recharging?'RECHARGING':!vehicle.flight&&vehicle.charge<1?'RECOVERING':'THRUST';
+    Zh.dataset.low=!vehicle.infiniteBoosters&&vehicle.charge<.2;
+    const launch=vehicle.launch;
+    launchReadout.textContent=vehicle.z>280?(vehicle.travelled/1000).toFixed(1)+' KM':!launch.valid?'RUN INTERRUPTED':launch.sixtyMph!==null?'0–60 MPH '+launch.sixtyMph.toFixed(2)+' S':launch.active?'0–60 MPH '+launch.elapsed.toFixed(2)+' S':'0–60 MPH —';
+    document.querySelector('[data-tap="KeyE"]')?.setAttribute('aria-disabled',String(vehicle.recharging||vehicle.forcedLanding));
 }
 var xf = new q(0,1,0);
-function tv(i) {
-    if (!A.chase)
-        return;
-    let e = new q(0,0,1).applyQuaternion(Pe.quaternion)
-      , t = new q(0,1,0).applyQuaternion(Pe.quaternion)
-      , n = Pe.position.clone().addScaledVector(e, -8).addScaledVector(t, 2.6)
-      , s = 1 - Math.exp(-i * 5);
-    _t.position.lerp(n, s),
-    xf.lerp(A.mode === "air" ? new q(0,1,0) : t, s).normalize(),
-    _t.up.copy(xf),
-    Wh.copy(Pe.position).addScaledVector(e, 4).addScaledVector(t, .8),
-    _t.lookAt(Wh)
+function tv(dt) {
+    if (!A.chase) return;
+    const forward = new q(Math.sin(vehicle.yaw),0,Math.cos(vehicle.yaw));
+    const target = Pe.position.clone().add(new q(0,1.15,0));
+    const boomHeight=vehicle.flight?2.6+Math.min(10,vehicle.y*.08):2.6;
+    const desired = target.clone().addScaledVector(forward,-8.7).add(new q(0,boomHeight,0));
+    // Shorten the camera boom when a building sits behind the car.
+    const delta=desired.clone().sub(target); let length=1;
+    for(const b of activeColliders) {
+      if(b.top<1.5)continue;
+      let near=0,far=1;
+      for(const [a,min,max] of [['x',b.x-b.hx-.35,b.x+b.hx+.35],['y',b.bottom-.35,b.top+.35],['z',b.z-b.hz-worldOrigin-.35,b.z+b.hz-worldOrigin+.35]]) {
+        if(Math.abs(delta[a])<1e-8){if(target[a]<min||target[a]>max){far=-1;break;}}
+        else {let t1=(min-target[a])/delta[a],t2=(max-target[a])/delta[a];if(t1>t2)[t1,t2]=[t2,t1];near=Math.max(near,t1);far=Math.min(far,t2);}
+      }
+      if(near<=far&&near>0)length=Math.min(length,Math.max(.08,near-.05));
+    }
+    desired.copy(target).addScaledVector(delta,length);
+    _t.position.lerp(desired,1-Math.exp(-dt*(length<.99?35:6)));
+    _t.up.set(0,1,0);
+    Wh.copy(target).addScaledVector(forward,vehicle.flight?1.5:3.5);_t.lookAt(Wh);
 }
 var Wh = new q
   , Df = matchMedia("(pointer: coarse)").matches || "ontouchstart" in window || navigator.maxTouchPoints > 0 || /[?&]touch\b/.test(location.search);
@@ -29087,6 +27844,7 @@ function nv(i) {
         right: e('<path d="M9 5l7 7-7 7"/>'),
         gas: e('<rect x="7" y="3" width="10" height="18" rx="3"/><path d="M10 8h4M10 12h4M10 16h4"/>'),
         brake: e('<rect x="4" y="7" width="16" height="10" rx="3"/><path d="M8 12h8"/>'),
+        flight: e('<path d="M12 3l2 7 7 4v2l-7-2v5l2 2H8l2-2v-5l-7 2v-2l7-4 2-7z"/>'),
         lift: e('<path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M8 19l-1 2M12 19v2M16 19l1 2"/>'),
         drop: e('<path d="M12 3v11M7.5 9.5L12 14l4.5-4.5"/><path d="M5 19h14"/>'),
         boost: e('<path d="M5 6l6 6-6 6M12 6l6 6-6 6"/>'),
@@ -29099,7 +27857,7 @@ function nv(i) {
     }
       , n = (o, c, l="", h="") => `<button class="${l}" data-hold="${c}" aria-label="${h}">${t[o]}</button>`
       , s = (o, c, l) => `<button data-tap="${c}" aria-label="${l}">${t[o]}</button>`;
-    i.innerHTML = `<div class="grp steer">${n("left", "KeyA", "", "steer left")}${n("right", "KeyD", "", "steer right")}</div><div class="grp jets">${n("lift", "KeyE", "", "lift / push off")}${n("drop", "Space", "", "controlled drop")}${n("boost", "KeyB", "", "rear boost")}</div><div class="grp pedals">${n("brake", "KeyS", "brake", "brake / reverse")}${n("gas", "KeyW", "gas", "throttle")}</div><div class="grp misc"><button data-menu aria-label="more">${t.menu}</button><div class="more">${s("reset", "KeyR", "reset")}${s("cam", "KeyC", "chase camera")}${s("fan", "KeyF", "fan")}${s("lamp", "KeyL", "lamps")}</div></div>`,
+    i.innerHTML = `<div class="grp steer">${n("left", "KeyA", "", "steer left")}${n("right", "KeyD", "", "steer right")}</div><div class="grp jets">${s("flight", "KeyE", "take flight / land")}${n("lift", "KeyT", "", "rise (hold)")}${n("drop", "Space", "", "controlled drop")}${n("boost", "KeyB", "", "rear boost")}</div><div class="grp pedals">${n("brake", "KeyS", "brake", "brake / reverse")}${n("gas", "KeyW", "gas", "throttle")}</div><div class="grp misc"><button data-menu aria-label="more">${t.menu}</button><div class="more">${s("reset", "KeyR", "reset")}${s("cam", "KeyC", "chase camera")}${s("lamp", "KeyL", "lamps")}</div></div>`,
     document.body.appendChild(i);
     let r = (o, c) => dispatchEvent(new KeyboardEvent(o,{
         code: c,
@@ -29201,14 +27959,23 @@ oi.addEventListener("click", async i => {
     setTimeout( () => Ih.textContent = "", 1200)
 }
 );
-function rv(i) {
-    let e = Pe.userData.wheels;
-    if (!e)
-        return;
-    let t = A.mode === "air" ? 0 : A.v;
-    for (let n of e)
-        n.rotation.x += Math.sign(t) * Math.min(Math.abs(t) / un.wheelRadius * i, .35),
-        n.rotation.y = n.userData.front ? A.steer : 0
+function rv(dt) {
+    const body=Pe.userData.body;
+    // Suspension moves only the body. Wheels remain upright with their tread on the surface.
+    if(body){
+      body.rotation.set(vehicle.flight?0:vehicle.pitch,0,vehicle.flight?0:vehicle.roll);
+      body.position.y=vehicle.flight?0:.01;
+    }
+    for(const pivot of Pe.userData.wheels||[]){
+      const {x,z,index,spinner}=pivot.userData;
+      const rolling=wheelKinematics(vehicle,x,z);
+      pivot.rotation.y=vehicle.flight?0:rolling.steer;
+      const travel=vehicle.wheelTravel[index];
+      // Distance / radius, without the old per-frame spin cap.
+      spinner.rotation.x=travel/WHEEL_RADIUS;
+      const support=vehicle.ramp?vehicle.y:(vehicle.wheelHeights[index]??vehicle.y);
+      pivot.position.y=un.wheelRadius+(vehicle.flight?0:Jt.clamp(support-vehicle.y,-.14,.14));
+    }
 }
 var av = new Hs
   , Xh = !1
@@ -29216,12 +27983,6 @@ var av = new Hs
   , ov = performance.now();
 function cv() {
     if (!(Xh || !(Pe.userData.wheels || performance.now() - ov > 12e3))) {
-        if (vf === 0 && So) {
-            let e = Pe.position.clone().setY(Pe.position.y + 1.5).sub(hn.target);
-            hn.target.add(e),
-            _t.position.add(e),
-            hn.update()
-        }
         ++vf < 4 || (Xh = !0,
         document.getElementById("boot").classList.add("done"),
         setTimeout( () => document.getElementById("boot")?.remove(), 900))
@@ -29236,78 +27997,6 @@ function Nf() {
     for (let i of To)
         i.shadow.needsUpdate = !0;
     xt.shadowMap.needsUpdate = !0
-}
-var Dh = new q
-  , yf = new q
-  , Uh = new q;
-function lv(i, e, t) {
-    i.getWorldPosition(Dh),
-    i.target.getWorldPosition(yf).sub(Dh).normalize(),
-    Uh.copy(e).sub(Dh);
-    let n = Uh.length();
-    return n < .001 ? !0 : Math.acos(Jt.clamp(Uh.dot(yf) / n, -1, 1)) < i.angle + Math.atan(t / n)
-}
-function hv() {
-    let i = !1;
-    for (let e of To) {
-        let t = lv(e, Pe.position, 3.5);
-        (t || e.userData.hadCar) && (e.shadow.needsUpdate = !0,
-        i = !0),
-        e.userData.hadCar = t
-    }
-    i && (xt.shadowMap.needsUpdate = !0)
-}
-function uv() {
-    let i = new Set(Li.beams)
-      , e = new Map;
-    gt.updateMatrixWorld(!0),
-    gt.traverse(s => {
-        if (!s.isMesh || s.isInstancedMesh || s.isSkinnedMesh || i.has(s) || Array.isArray(s.material) || s.material.transparent || s.morphTargetInfluences)
-            return;
-        for (let c = s; c; c = c.parent)
-            if (c === Pe || !c.visible)
-                return;
-        let r = s.geometry
-          , a = Object.keys(r.attributes).sort().map(c => c + r.attributes[c].itemSize).join(",")
-          , o = [s.material.uuid, s.castShadow, s.receiveShadow, s.renderOrder, !!r.index, a].join("|");
-        (e.get(o) ?? e.set(o, []).get(o)).push(s)
-    }
-    );
-    let t = 0
-      , n = 0;
-    for (let s of e.values()) {
-        if (t += s.length,
-        s.length < 2) {
-            n += 1;
-            continue
-        }
-        let r = s.map(l => {
-            let h = l.geometry.clone().applyMatrix4(l.matrixWorld);
-            for (let u of Object.keys(h.morphAttributes))
-                delete h.morphAttributes[u];
-            return h
-        }
-        )
-          , a = tf(r, !1);
-        if (!a) {
-            n += s.length;
-            continue
-        }
-        let o = s[0]
-          , c = new be(a,o.material);
-        c.castShadow = o.castShadow,
-        c.receiveShadow = o.receiveShadow,
-        c.renderOrder = o.renderOrder,
-        c.matrixAutoUpdate = !1,
-        gt.add(c);
-        for (let l of s)
-            l.removeFromParent(),
-            l.geometry.dispose();
-        for (let l of r)
-            l.dispose();
-        n += 1
-    }
-    console.info(`[perf] merged static meshes: ${t} -> ${n}`)
 }
 var Mf = new Float64Array(64)
   , Sf = !1;
@@ -29347,19 +28036,20 @@ function dv() {
     Sf = !0,
     e
 }
+let accumulator=0;
+let previousPose=null;
 function fv() {
-    let i = Math.min(av.getDelta(), .05)
-      , e = 4;
-    for (let t = 0; t < e; t++)
-        Qx(i / e);
-    return rv(i),
-    tv(i),
-    nv(i),
-    cv(),
-    ev(i),
-    sv(i),
-    (A.mode !== "ground" || Math.abs(A.v) > .01) && hv(),
-    i
+    const dt=Math.min(av.getDelta(),.05), fixed=1/120;
+    accumulator+=dt;
+    while(accumulator>=fixed){
+       previousPose={pos:A.pos.clone(),quat:A.quat.clone()};
+       Qx(fixed);accumulator-=fixed;
+    }
+    const alpha=accumulator/fixed;
+    if(Math.abs(vehicle.z-worldOrigin)>8192)shiftOrigin(Math.floor(vehicle.z/4096)*4096);
+    if(previousPose){Pe.position.copy(previousPose.pos).lerp(A.pos,alpha);Pe.position.z-=worldOrigin;Pe.quaternion.copy(previousPose.quat).slerp(A.quat,alpha);}
+    rv(dt);tv(dt);nv(dt);cv();ev(dt);sv(dt);
+    return dt;
 }
 var _o = [...[-.45, -.15, .15, .45].map(i => ({
     kind: "rear",
@@ -29369,11 +28059,10 @@ var _o = [...[-.45, -.15, .15, .45].map(i => ({
     kind: "lift",
     p: new q(i,.16,e),
     d: new q(0,-1,0)
-})), ...[[1, 1.62], [-1, 1.62]].map( ([i,e]) => ({
-    kind: "side",
-    p: new q(i * 1.005,.46,e),
-    d: new q(Math.sign(i),0,0)
-}))]
+})), ...[[1,1.62],[-1,1.62],[1,-1.62],[-1,-1.62]].map(([x,z])=>({
+    kind:'side',p:new q(x*1.035,.46,z),d:new q(Math.sign(x),0,0)
+})), ...[-.6,.6].map(x=>({kind:'front',p:new q(x,.4,2.29),d:new q(0,0,1)}))]
+
   , pv = `
   float h21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
   float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.0-2.0*f);
@@ -29533,9 +28222,9 @@ var Mo = class {
     }
 }
   , wf = ( () => {
-    let i = new Mo(5e3,!0)
-      , e = new Mo(16e3,!1)
-      , t = new Si(.03,.045,.05,12,1,!0)
+    let i = new Mo(1800,!0)
+      , e = new Mo(4500,!1)
+      , t = new Si(.065,.085,.12,16,1,!0)
       , n = new Lt({
         color: 723725,
         metalness: .7,
@@ -29550,6 +28239,18 @@ var Mo = class {
         Pe.add(g),
         s.push(g)
     }
+    const coreGeometry=new Si(.12,.032,1,16,1,true);coreGeometry.translate(0,.5,0);
+    const cores=_o.map((nozzle,index)=>{
+      const mat=new Mt({transparent:true,depthWrite:false,blending:Xi,side:Ot,toneMapped:false,
+        uniforms:{strength:{value:0}},
+        vertexShader:'varying vec2 vUv; void main(){vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+        fragmentShader:'varying vec2 vUv; uniform float strength; void main(){float tail=pow(1.0-vUv.y,2.0); float edge=.25+.75*sin(vUv.x*3.14159); float alpha=tail*edge*(.35+.5*strength); gl_FragColor=vec4(mix(vec3(.25,.65,1.),vec3(.85,.95,1.),tail),alpha);}'
+      });
+      const core=new be(coreGeometry,mat);core.position.copy(nozzle.p).addScaledVector(nozzle.d,.065);
+      core.quaternion.setFromUnitVectors(new q(0,1,0),nozzle.d);core.visible=false;core.renderOrder=8;
+      core.name='thruster-'+nozzle.kind+'-'+index;Pe.add(core);return core;
+    });
+    Pe.userData.thrusterCores=cores;
     let r = new Float32Array(_o.length * 2)
       , a = new q
       , o = new q
@@ -29562,6 +28263,7 @@ var Mo = class {
       , m = new q;
     return {
         update(b, g) {
+            Pe.updateMatrixWorld(true);
             c += b,
             l || (a.copy(Pe.position),
             l = !0),
@@ -29570,6 +28272,13 @@ var Mo = class {
             o.length() > 200 && o.set(0, 0, 0),
             _o.forEach( (x, v) => {
                 let _ = g.level[v];
+                const core=cores[v];core.visible=_>.015;
+                if(core.visible){
+                  const pulse=.96+.04*Math.sin(c*67+v*1.8);
+                  const length=x.kind==='rear'?1.7:x.kind==='lift'?1.25:.7;
+                  core.scale.set(.65+_*1.1,(.15+_*length)*pulse,.65+_*1.1);
+                  core.material.uniforms.strength.value=_;
+                }
                 if (_ < .03) {
                     r[v * 2] = r[v * 2 + 1] = 0;
                     return
@@ -29577,8 +28286,8 @@ var Mo = class {
                 h.copy(x.p).applyMatrix4(Pe.matrixWorld),
                 u.copy(x.d).transformDirection(Pe.matrixWorld);
                 let P = _ * (x.kind === "side" ? .6 : 1);
-                for (r[v * 2] += b * 420 * P,
-                r[v * 2 + 1] += b * 260 * P; r[v * 2] >= 1; r[v * 2]--) {
+                for (r[v * 2] += b * 130 * P,
+                r[v * 2 + 1] += b * 65 * P; r[v * 2] >= 1; r[v * 2]--) {
                     let E = Math.random();
                     m.copy(h).addScaledVector(o, -E * b),
                     d.set(Math.random() - .5, Math.random() - .5, Math.random() - .5).multiplyScalar(.18),
@@ -29590,7 +28299,7 @@ var Mo = class {
                     m.copy(h).addScaledVector(o, -E * b).addScaledVector(u, .15),
                     d.set(Math.random() - .5, Math.random() - .5, Math.random() - .5).multiplyScalar(.45),
                     f.copy(u).add(d).normalize().multiplyScalar(20 * (.6 + Math.random() * .7)).addScaledVector(o, .85),
-                    e.emit(m, f, 1.3 + Math.random() * 1.6, .3, 2.4 + Math.random() * 1.6, 2.4, .3, E * b)
+                    e.emit(m, f, 0.5 + Math.random() * .5, .12, .7 + Math.random() * .6, 2.4, .45, E * b)
                 }
             }
             );
@@ -29601,6 +28310,10 @@ var Mo = class {
             i.update(b, c, 0, 0),
             e.update(b, c, .35, 2.2)
         },
+        shiftOrigin(delta){
+            a.z-=delta;
+            for(const particles of [i,e]){for(let n=2;n<particles.pos.length;n+=3)particles.pos[n]-=delta;particles.points.geometry.attributes.position.needsUpdate=true;}
+        },
         busy() {
             return i.busyUntil > c - .2 || e.busyUntil > c - .2
         }
@@ -29608,208 +28321,68 @@ var Mo = class {
 }
 )();
 xt.shadowMap.autoUpdate = !1;
-uv();
 for (let i of To)
     i.shadow.autoUpdate = !1;
-window.__RAMP = { get dollarI(){ return $i; }, get at(){ return at; }, get currentLoc(){ return currentLoc; }, get cam(){ return [_t.position.x,_t.position.y,_t.position.z]; }, get car(){ return [Pe.position.x,Pe.position.y,Pe.position.z]; }, get cityVisible(){ return cityGroup.visible; }, get nRamp(){ return rampWorldChildren.length; }, get flyMode(){ return A.flyMode; }, get yaw(){ return A.yaw; }, get angVelY(){ return A.angVel.y; }, get fireRight(){ return A._fireRight; }, get fireLeft(){ return A._fireLeft; }, get left(){ return on.ArrowLeft; } };
-Nf();
-// --- multi-location system ---
-var rampWorldChildren = gt.children.filter(function(c){ return c !== Pe && !c.isLight && !c.isPoints; }).slice();
-var cityBuildings = [];
-var city2Buildings = [];
-var activeBuildings = [];
-var explosionMo = new Mo(2000, !1);
-var explosionTriggered = false;
-var cityGroup = new Bt();
-gt.add(cityGroup);
-var city2Group = new Bt();
-gt.add(city2Group);
-(function buildCity(){
-  var gMat = new Lt({color:0x5a5a62, roughness:.85, metalness:0});
-  var ground = new be(new Ct(500,.1,500), gMat);
-  ground.position.y = -0.05;
-  ground.receiveShadow = true;
-  cityGroup.add(ground);
-  var bMat = new Lt({color:0x8a9aaa, roughness:.7, metalness:.1});
-  var rng = function(a,b){ return a + Math.random()*(b-a); };
-  for (var i=0;i<260;i++){
-    var w = rng(3,9), h = rng(5,28), d = rng(3,9);
-    var b = new be(new Ct(w,h,d), bMat);
-    var x = rng(-230,230), z = rng(-230,230);
-    if (Math.abs(x)<12 && Math.abs(z)<12) { i--; continue; }
-    b.position.set(x, h/2, z);
-    b.castShadow = true; b.receiveShadow = true;
-    cityGroup.add(b);
-    cityBuildings.push({x:x,z:z,hx:w/2+1.0,hz:d/2+1.6});
-  }
-  // roads (simple dark planes)
-  var rMat = new Lt({color:0x222226, roughness:.95, metalness:0});
-  for (var r=0;r<14;r++){
-    var road = new be(new Ct(480,.05,9), rMat);
-    road.position.set(0,.01, -230 + r*34);
-    road.receiveShadow = true;
-    cityGroup.add(road);
-    var road2 = new be(new Ct(9,.05,480), rMat);
-    road2.position.set(-230 + r*34,.01,0);
-    road2.receiveShadow = true;
-    cityGroup.add(road2);
-  }
-})();
-// ensure city is lit
-var cityAmb = new Ya(0xffffff, 0x808080, 1.4);
-cityGroup.add(cityAmb);
-var citySun = new Ka(0xffffff, 2.4);
-citySun.position.set(40, 60, 30);
-citySun.castShadow = true;
-cityGroup.add(citySun);
-// build city2 with ramps
-(function buildCity2(){
-  var gMat = new Lt({color:0x3a3a40, roughness:.9, metalness:0});
-  var ground = new be(new Ct(500,.1,500), gMat);
-  ground.position.y = -0.05; ground.receiveShadow = true;
-  city2Group.add(ground);
-  var bMat = new Lt({color:0x7a8a9a, roughness:.7, metalness:.1});
-  var rng = function(a,b){ return a + Math.random()*(b-a); };
-  for (var i=0;i<180;i++){
-    var w = rng(4,10), h = rng(6,24), d = rng(4,10);
-    var b = new be(new Ct(w,h,d), bMat);
-    var x = rng(-220,220), z = rng(-220,220);
-    if (Math.abs(x)<14 && Math.abs(z)<14) { i--; continue; }
-    b.position.set(x, h/2, z); b.castShadow=true; b.receiveShadow=true;
-    city2Group.add(b);
-    city2Buildings.push({x:x,z:z,hx:w/2+1.0,hz:d/2+1.6});
-  }
-  // ramps (inclined planes)
-  var rMat = new Lt({color:0x9a6a4a, roughness:.6, metalness:.2});
-  for (var r=0;r<24;r++){
-    var ramp = new be(new Ct(rng(6,14), .4, rng(10,22)), rMat);
-    ramp.position.set(rng(-200,200), rng(1,4), rng(-200,200));
-    ramp.rotation.x = rng(-0.35, -0.05);
-    ramp.rotation.y = rng(0, Math.PI*2);
-    ramp.castShadow = true; ramp.receiveShadow = true;
-    city2Group.add(ramp);
-  }
-  var amb = new Ya(0xffffff, 0x808080, 1.2);
-  city2Group.add(amb);
-  var sun = new Ka(0xffffff, 2.2);
-  sun.position.set(40,60,30);
-  city2Group.add(sun);
-})();
-// duplicate the real ramp around the city
-(function addRampsToCity(grp, builds, n){
-  for (let _r=0; _r<n; _r++){
-    let _clone = Fh.clone(true);
-    let _x = (Math.random()-0.5)*360;
-    let _z = (Math.random()-0.5)*360;
-    if (Math.abs(_x)<15 && Math.abs(_z)<15) { _r--; continue; }
-    _clone.position.set(_x, 0, _z);
-    _clone.rotation.y = Math.random() * Math.PI * 2;
-    _clone.traverse(function(c){ if(c.isMesh){ c.castShadow=true; c.receiveShadow=true; } });
-    grp.add(_clone);
-    builds.push({x:_x, z:_z, hx: 6, hz: 12});
-  }
-})(cityGroup, cityBuildings, 12);
-(function addRampsToCity2(grp, builds, n){
-  for (let _r=0; _r<n; _r++){
-    let _clone = Fh.clone(true);
-    let _x = (Math.random()-0.5)*360;
-    let _z = (Math.random()-0.5)*360;
-    if (Math.abs(_x)<15 && Math.abs(_z)<15) { _r--; continue; }
-    _clone.position.set(_x, 0, _z);
-    _clone.rotation.y = Math.random() * Math.PI * 2;
-    _clone.traverse(function(c){ if(c.isMesh){ c.castShadow=true; c.receiveShadow=true; } });
-    grp.add(_clone);
-    builds.push({x:_x, z:_z, hx: 6, hz: 12});
-  }
-})(city2Group, city2Buildings, 16);
-city2Group.visible = false;
-cityGroup.visible = false;
-var locations = [
-  {name:'Ramp', spawn:{x:-7,z:0,h:Math.PI/2}, ramp:true},
-  {name:'City', spawn:{x:0,z:0,h:0}, ramp:false},
-  {name:'Ramp City', spawn:{x:0,z:0,h:0}, ramp:false}
-];
-var currentLoc = 1;
-function switchLoc(idx){
-  currentLoc = idx;
-  var loc = locations[idx];
-  rampWorldChildren.forEach(function(c){ c.visible = (idx===0); });
-  cityGroup.visible = (idx===1);
-  city2Group.visible = (idx===2);
-  activeBuildings = (idx===1) ? cityBuildings : (idx===2) ? city2Buildings : [];
-  A.damage = 0;
-  A.blown = !1;
-  A.thrustUp = !1;
-  A.descend = !1;
-  explosionTriggered = false;
-  Pe.visible = true;
-  A.mode = 'ground';
-  A.x = loc.spawn.x; A.z = loc.spawn.z; A.yaw = loc.spawn.h; A.v = 0;
-  A.vel.set(0,0,0); A.angVel.set(0,0,0); A.pos.set(loc.spawn.x,0,loc.spawn.z);
-  A.susp.h = 0; A.susp.v = 0; A.susp.pitch = 0; A.susp.pv = 0;
-  A.allowRamp = loc.ramp;
-  Pe.position.set(A.x, A.susp.h, A.z);
-  Pe.quaternion.setFromAxisAngle(new q(0,1,0), A.yaw);
-  A.msg = loc.name;
+// Install the only playable environment.
+
+let worldOrigin=0;
+const atmosphere=createAtmosphere({Mesh:be,Sphere:Va,Shader:Mt,Color:ue,Vector:q,Hemi:Ya,Sun:Ka,Fog:Ia,Pass:Xs},gt,xt,Di,_t,Nf);
+To.length=0;To.push(atmosphere.sun);
+const city=buildCity({Group:Bt,Mesh:be,Box:Ct,Material:Lt,Texture:Os,Loader:ja,Instanced:Us,Matrix:Le,Vector:q,Quaternion:wt,Cylinder:Si,Sphere:Va,Color:ue},gt,Nf);
+const forest=buildForestRoad({Group:Bt,Mesh:be,Box:Ct,Plane:yi,Cylinder:Si,Material:Lt,Texture:Os,TextureLoader:ja,Instanced:Us,Matrix:Le,Vector:q,Quaternion:wt,Loader:class extends so{constructor(){super();this.setMeshoptDecoder(cf);}},Renderer:Pa,Scene:Ds,Camera:Rt,Hemi:Ya,Sun:Ka,Attribute:We,BasicMaterial:Ft},gt,Nf);
+let ramp=null,activeScene='city',sceneLoading=false;
+let activeColliders=city.colliders.concat(forest.colliders);
+const vehicle=createVehicle();
+function syncForest(){if(activeScene==='ramp'){activeColliders=ramp.colliders;return;}if(forest.update(vehicle.z,worldOrigin))activeColliders=city.colliders.concat(forest.colliders);}
+function shiftOrigin(next){
+    const delta=next-worldOrigin;if(!delta)return;worldOrigin=next;city.group.position.z=-next;
+    _t.position.z-=delta;hn.target.z-=delta;Wh.z-=delta;wf.shiftOrigin(delta);
+    syncForest();Nf();
 }
-// UI buttons
-var locBar = document.createElement('div');
-locBar.style.cssText = 'position:fixed;left:calc(12px + env(safe-area-inset-left));bottom:calc(10px + env(safe-area-inset-bottom));display:flex;gap:6px;z-index:6;';
-locations.forEach(function(loc,idx){
-  var btn = document.createElement('button');
-  btn.textContent = (idx+6) + ': ' + loc.name;
-  btn.style.cssText = 'font:11px ui-monospace,Menlo,monospace;background:#1a1a1a;color:#aaa;border:1px solid #333;border-radius:6px;padding:4px 8px;cursor:pointer;';
-  btn.addEventListener('click', function(){ switchLoc(idx); });
-  locBar.appendChild(btn);
-});
-document.body.appendChild(locBar);
-addEventListener('keydown', function(e){
-  if (e.code === 'Digit6') switchLoc(0);
-  if (e.code === 'Digit7') switchLoc(1);
-  if (e.code === 'Digit8') switchLoc(2);
-});
-// update keys hint
-var keysEl = document.getElementById('keys');
-if (keysEl) keysEl.textContent = (keysEl.textContent || '') + ' · 6/7/8 locations · V fly · E thrust up · Space descend';
-switchLoc(1);
-/[?&]bench\b/.test(location.search) && (window.__dbg = {
-    car: Pe,
-    drive: A,
-    renderer: xt,
-    scene: gt,
-    composer: Di
-});
-xt.setAnimationLoop( () => {
-    if (A.blown && !explosionTriggered) {
-        explosionTriggered = true;
-        Pe.visible = false;
-        for (let _k = 0; _k < 400; _k++) {
-            let _ang = Math.random() * Math.PI * 2;
-            let _sp = 6 + Math.random() * 18;
-            explosionMo.emit(
-                new q(Pe.position.x, Pe.position.y + 0.5, Pe.position.z),
-                new q(Math.cos(_ang) * _sp, 8 + Math.random() * 12, Math.sin(_ang) * _sp),
-                0.6 + Math.random() * 1.4, 0.15, 2.6, 4, 0.9, 0
-            );
-        }
-        A.msg = "BLOWN UP - press R";
-    }
-    A.chase || hn.update();
-    let i = fv();
-    if (A.flyMode) {
-        if (A.vel.y > 5) A.vel.y = 5;
-        if (A.vel.y < -6) A.vel.y = -6;
-        if (A.pos.y > 40) A.pos.y = 40;
-        Pe.position.copy(A.pos);
-        Pe.quaternion.copy(A.quat);
-    }
-    if (A.blown) {
-        explosionMo.update(i, i, 9.8, 1.5);
-    } else {
-        wf.update(i, A.firing);
-    }
-    _t.position.y < .5 && (_t.position.y = .5),
-    (dv() || !Xh || wf.busy() || xt.shadowMap.needsUpdate || A.blown || explosionMo.busyUntil > 0) && Di.render()
+function resetCity(){
+    shiftOrigin(0);
+    const unlimited=vehicle.infiniteBoosters;
+    Object.assign(vehicle,createVehicle());if(activeScene==='ramp')Object.assign(vehicle,{x:-35,z:0,yaw:Math.PI/2});setInfiniteBoosters(vehicle,unlimited);clearControls();syncForest();
+    document.getElementById('infinite-boosters').checked=unlimited;
+    A.firing.level.fill(0);A.mode='ground';A.flyMode=false;A.v=0;
+    A.pos.set(vehicle.x,0,vehicle.z);A.quat.setFromAxisAngle(new q(0,1,0),vehicle.yaw);A.vel.set(0,0,0);
+    A.x=vehicle.x;A.z=vehicle.z;A.yaw=0;A.steer=0;A.blown=false;
+    Pe.position.copy(A.pos);Pe.quaternion.copy(A.quat);previousPose=null;accumulator=0;
+    _t.position.set(vehicle.x,3.75,vehicle.z-8.7);Wh.set(vehicle.x,1.15,vehicle.z+3.5);_t.lookAt(Wh);
+    if(activeScene==='ramp'){mf(false);_t.position.set(-29.5,20,50.3);Wh.set(2,8.5,0);hn.target.copy(Wh);_t.lookAt(Wh);}else mf(true);
+    Nf();
 }
-);
-//# sourceMappingURL=main-LGR2XQC7.js.map
+function selectScene(name){
+ activeScene=name==='ramp'?'ramp':'city';
+ if(activeScene==='ramp'&&!ramp)ramp=buildRampScene({Group:Bt,Mesh:be,Box:Ct,Cylinder:Si,Material:Lt,TextureLoader:ja,Geometry:bt,Attribute:We,Instanced:Us,Matrix:Le,Vector:q,Quaternion:wt,Hemi:Ya},gt,forest,Nf);
+ city.group.visible=activeScene==='city';forest.root.visible=activeScene==='city';if(ramp){ramp.group.visible=activeScene==='ramp';ramp.fill.intensity=activeScene==='ramp'?.9:0;}atmosphere.setPreset(activeScene==='ramp'?1:0);
+ for(const tab of document.querySelectorAll('[data-scene]'))tab.setAttribute('aria-pressed',String(tab.dataset.scene===activeScene));resetCity();
+}
+async function changeScene(name){
+ if(sceneLoading||name===activeScene)return;
+ const overlay=document.getElementById('scene-loading'),tabs=[...document.querySelectorAll('[data-scene]')];
+ sceneLoading=true;clearControls();overlay.hidden=false;tabs.forEach(tab=>tab.disabled=true);
+ document.getElementById('scene-loading-text').textContent=`Loading ${name==='ramp'?'original ramp':'city & forest'}…`;
+ try{
+  // Paint the loading state before building geometry or compiling shaders.
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  selectScene(name);
+  await Promise.all([forest.assets,ramp?.ready,new Promise(resolve=>setTimeout(resolve,250))]);
+  syncForest();Pe.updateMatrixWorld(true);Nf();Di.render();
+  await new Promise(resolve=>requestAnimationFrame(resolve));
+ }catch(error){console.error('Scene change failed',error);document.getElementById('scene-loading-text').textContent='Scene could not load. Try again.';await new Promise(resolve=>setTimeout(resolve,1500));}
+ finally{sceneLoading=false;clearControls();overlay.hidden=true;tabs.forEach(tab=>tab.disabled=false);av.getDelta();}
+}
+for(const tab of document.querySelectorAll('[data-scene]'))tab.addEventListener('click',()=>changeScene(tab.dataset.scene));
+Yh=58;So=true;Kh();mf(true);resetCity();
+window.__RAMP={get car(){return [vehicle.x,vehicle.y,vehicle.z]},get flyMode(){return vehicle.flight},get yaw(){return vehicle.yaw},get cityVisible(){return city.group.visible},get nRamp(){return 0}};
+if(/[?&]bench\b/.test(location.search)) window.__dbg={car:Pe,drive:A,vehicle,renderer:xt,scene:gt,composer:Di,camera:_t,controls:hn,city,forest,atmosphere,selectScene,changeScene,get sceneLoading(){return sceneLoading},get activeScene(){return activeScene},get ramp(){return ramp},get origin(){return worldOrigin},get colliders(){return activeColliders},step:Qx,reset:resetCity};
+xt.setAnimationLoop(()=>{
+    if(document.hidden){av.getDelta();return;}
+    if(!A.chase)hn.update();
+    const dt=fv();syncForest();Pe.updateMatrixWorld(true);wf.update(dt,A.firing);
+    const lightChanged=atmosphere.update(dt,vehicle,worldOrigin,activeColliders);
+    // Dynamic shadow refresh includes the moving car, not only static streets.
+    if(Math.abs(vehicle.speed)>.05||vehicle.flight)Nf();
+    if(dv()||!Xh||wf.busy()||xt.shadowMap.needsUpdate||lightChanged)Di.render();
+});

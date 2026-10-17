@@ -1,0 +1,32 @@
+(async()=>{
+ const d=window.__dbg,results=[];
+ const assert=(ok,message)=>{if(!ok)throw Error(message);results.push(message);};
+ const key=(code,type='keydown')=>dispatchEvent(new KeyboardEvent(type,{code}));
+ const tap=code=>{key(code);key(code,'keyup');};
+ const step=seconds=>{for(let i=0;i<seconds*120;i++)d.step(1/120);};
+ const frame=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+ d.reset();
+ assert(d.scene.children.filter(c=>c.isPoints).length===2,'Both exhaust particle systems remain in the scene');
+ key('KeyB');step(.5);await frame();
+ assert(d.vehicle.speed>4 && d.vehicle.charge<1,'B alone accelerates and drains charge');
+ assert(d.car.userData.thrusterCores.slice(0,4).every(c=>c.visible),'Rear booster cores are visible while B is held');
+ key('KeyB','keyup');step(.1);await frame();
+ assert(d.car.userData.thrusterCores.slice(0,4).every(c=>!c.visible),'Rear cores shut off on release');
+ d.reset();key('KeyW');key('KeyD');step(1);key('KeyW','keyup');key('KeyD','keyup');await frame();
+ d.car.updateMatrixWorld(true);
+ const wheels=d.car.userData.wheels;
+ assert(wheels.every(w=>Math.abs(w.matrixWorld.elements[13]-.3)<.005),'All four tyre treads stay on the road during a turn');
+ assert(Math.abs(wheels[0].rotation.y-wheels[1].rotation.y)>.001,'Front wheels use different inner / outer steering angles');
+ assert(Math.abs(wheels[2].userData.spinner.rotation.x-wheels[3].userData.spinner.rotation.x)>.001,'Inner / outer wheels roll different distances');
+ d.reset();tap('KeyE');step(5);await frame();
+ assert(d.car.userData.thrusterCores.slice(4,8).every(c=>c.visible),'Lift exhaust is visible in flight');
+ d.vehicle.charge=.001;key('KeyB');key('ShiftLeft');step(.5);await frame();
+ assert(d.vehicle.forcedLanding && d.vehicle.charge===0,'Charge depletion engages reserve landing');
+ const y=d.vehicle.y;tap('KeyE');step(2);
+ assert(d.vehicle.y<y && d.vehicle.forcedLanding,'E and climb cannot defeat forced descent');
+ key('KeyB','keyup');key('ShiftLeft','keyup');step(8);assert(!d.vehicle.flight,'Depleted vehicle lands');
+ step(12);assert(d.vehicle.charge===1 && !d.vehicle.recharging,'Ground recharge restores full capacity');
+ assert(!!document.querySelector('a[href="https://x.com/ableezz"]'),'Ableez X credit is linked');
+ assert(document.querySelector('#about').textContent.includes('GPT-6'),'Model credit is present');
+ d.reset();return results;
+})()
